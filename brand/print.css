@@ -1,0 +1,60 @@
+/* vite-pdf build. Import after tokens.css. No glass. Solid ink on void or inverted paper. */
+
+@page {
+  size: letter;
+  margin: 16mm;
+}
+
+@media print {
+  .tetra-top,
+  .tetra-dock,
+  .tetra-footer {
+    display: none !important;
+  }
+
+  html,
+  body {
+    background: #fff;
+    color: #111;
+  }
+
+  :root {
+    --tetra-void: #fff;
+    --tetra-ink: #111;
+    --tetra-ink-dim: #444;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .tetra-mark,
+  .tetra-g {
+    color: #111;
+    filter: none;
+  }
+}
+
+.tetra-pdf {
+  max-width: 100%;
+  background: var(--tetra-void);
+  color: var(--tetra-ink);
+}
+
+.tetra-pdf h1,
+.tetra-pdf h2,
+.tetra-pdf h3 {
+  font-family: var(--tetra-font);
+  font-weight: 500;
+  letter-spacing: var(--tetra-tracking-display);
+  text-transform: uppercase;
+  margin: 0 0 12px;
+}
+
+.tetra-pdf .rule {
+  height: 1px;
+  background: currentColor;
+  opacity: 0.25;
+  margin: 20px 0;
+}

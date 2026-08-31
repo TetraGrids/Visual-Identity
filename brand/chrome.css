@@ -1,0 +1,246 @@
+/* Tetra chrome — glass only lives here. Content stays solid. Radius stays 0. */
+
+.tetra-top {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 80;
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  height: var(--tetra-bar-h);
+  padding: 0 28px;
+  overflow: hidden;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  color: var(--tetra-ink);
+  background: var(--tetra-glass);
+  border: none;
+  border-bottom: var(--tetra-line) solid var(--tetra-glass-border);
+  box-shadow: var(--tetra-glow-triad);
+  backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  transition:
+    width var(--tetra-dur) var(--tetra-ease),
+    height var(--tetra-dur) var(--tetra-ease),
+    padding var(--tetra-dur) var(--tetra-ease),
+    clip-path var(--tetra-dur) var(--tetra-ease),
+    border-color var(--tetra-dur) var(--tetra-ease),
+    box-shadow var(--tetra-dur) var(--tetra-ease);
+}
+
+.tetra-top.is-tri {
+  width: var(--tetra-tri);
+  height: var(--tetra-tri);
+  padding: 16px 0 0 16px;
+  align-items: flex-start;
+  border-bottom: none;
+  clip-path: polygon(0 0, 100% 0, 0 100%, 0 100%);
+}
+
+.tetra-top.is-tri::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to bottom left,
+    transparent calc(50% - 0.6px),
+    rgba(244, 247, 244, 0.42) 50%,
+    transparent calc(50% + 0.6px)
+  );
+}
+
+.tetra-top__mark {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  color: var(--tetra-green);
+  filter: drop-shadow(var(--tetra-glow-green));
+}
+
+.tetra-top__mark svg {
+  width: 28px;
+  height: 28px;
+  display: block;
+}
+
+.tetra-top.is-tri .tetra-top__mark {
+  width: 32px;
+  height: 32px;
+}
+
+.tetra-top.is-tri .tetra-top__mark svg {
+  width: 32px;
+  height: 32px;
+}
+
+.tetra-top__nav {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-left: auto;
+  opacity: 1;
+  transform: translateY(0);
+  transition:
+    opacity 0.28s var(--tetra-ease),
+    transform 0.28s var(--tetra-ease);
+}
+
+.tetra-top.is-tri .tetra-top__nav {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(-8px);
+}
+
+.tetra-top__nav a {
+  color: var(--tetra-ink);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.tetra-top__nav a:hover,
+.tetra-top__nav a:focus-visible {
+  color: var(--tetra-green);
+}
+
+.tetra-dock {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  z-index: 80;
+  width: var(--tetra-dock);
+  height: var(--tetra-dock);
+  padding: 0;
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  color: var(--tetra-green);
+  background: var(--tetra-glass);
+  border: none;
+  box-shadow: var(--tetra-glow-triad);
+  backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  clip-path: polygon(100% 100%, 0 100%, 100% 0);
+}
+
+.tetra-dock::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(
+    to top left,
+    transparent calc(50% - 0.6px),
+    rgba(244, 247, 244, 0.5) 50%,
+    transparent calc(50% + 0.6px)
+  );
+}
+
+.tetra-dock__icon {
+  position: absolute;
+  right: 14px;
+  bottom: 14px;
+  width: 22px;
+  height: 22px;
+  color: var(--tetra-green);
+  filter: drop-shadow(var(--tetra-glow-green));
+}
+
+.tetra-dock__icon svg {
+  width: 22px;
+  height: 22px;
+  display: block;
+}
+
+.tetra-footer {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 70;
+  display: flex;
+  justify-content: space-between;
+  gap: 32px;
+  padding: 28px 32px 28px;
+  padding-right: calc(var(--tetra-dock) + 20px);
+  color: var(--tetra-ink);
+  background: var(--tetra-glass);
+  border-top: var(--tetra-line) solid var(--tetra-glass-border);
+  box-shadow: var(--tetra-glow-triad);
+  backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  transform: translateY(110%);
+  transition: transform var(--tetra-dur) var(--tetra-ease);
+}
+
+.tetra-footer.is-open {
+  transform: translateY(0);
+}
+
+.tetra-footer a {
+  color: var(--tetra-ink);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.tetra-footer a:hover,
+.tetra-footer a:focus-visible {
+  color: var(--tetra-green);
+}
+
+.tetra-footer__brand {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tetra-footer__word {
+  width: 120px;
+  color: var(--tetra-ink);
+}
+
+.tetra-footer__word svg {
+  width: 120px;
+  height: auto;
+  display: block;
+}
+
+.tetra-footer__links {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 20px 28px;
+}
+
+.tetra-main {
+  position: relative;
+  z-index: 1;
+  background: var(--tetra-void);
+}
+
+@media (max-width: 720px) {
+  .tetra-top__nav {
+    gap: 16px;
+  }
+
+  .tetra-top__nav a {
+    font-size: 11px;
+  }
+
+  .tetra-footer {
+    flex-direction: column;
+    gap: 20px;
+  }
+}

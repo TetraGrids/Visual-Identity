@@ -1,0 +1,148 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tetra.Earth — Brand Guide</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="icon" href="/brand/geometry/icon-mark.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <main class="tetra-main guide">
+      <section class="hero" id="top">
+        <div class="hero__field" aria-hidden="true"></div>
+        <div class="hero__g" data-g></div>
+        <p class="eyebrow">Tetra.Earth · Visual Identity</p>
+        <h1>Tetrahedron G</h1>
+        <p class="lede">A tetrahedron inside a larger tetrahedron, seen from above. The grid that names the brand, the chrome, and every future build.</p>
+      </section>
+
+      <section id="mark">
+        <p class="eyebrow">01 · Mark</p>
+        <h2>Construction</h2>
+        <p class="lede">Four steps. Same figure at every scale. Radius stays zero.</p>
+        <ol class="steps">
+          <li>
+            <strong>Outer tetra</strong>
+            Equilateral triangle. You are looking down the apex onto the base.
+          </li>
+          <li>
+            <strong>Medial face</strong>
+            Connect the three midpoints. The inverted triangle is the inner tetra.
+          </li>
+          <li>
+            <strong>Centroid rays</strong>
+            Center to every vertex and every midpoint. Four faces, unfolded in place.
+          </li>
+          <li>
+            <strong>Corner nest</strong>
+            Repeat the construction in each corner triangle. That is Tetrahedron G.
+          </li>
+        </ol>
+        <div class="pair">
+          <figure>
+            <div class="plate" data-g-mini="g"></div>
+            <figcaption>Tetrahedron G · master</figcaption>
+          </figure>
+          <figure>
+            <div class="plate" data-g-mini="hex"></div>
+            <figcaption>Hex construction · v0</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="color">
+        <p class="eyebrow">02 · Triad</p>
+        <h2>Void, green, two glows</h2>
+        <div class="swatches">
+          <article class="swatch swatch--void"><span>#050705</span>Void</article>
+          <article class="swatch swatch--green"><span>#22c55e</span>Primary</article>
+          <article class="swatch swatch--violet"><span>#8b5cf6</span>Glow</article>
+          <article class="swatch swatch--orange"><span>#f97316</span>Glow</article>
+          <article class="swatch swatch--ink"><span>#f4f7f4</span>Ink</article>
+        </div>
+        <p>Violet and orange are bloom on the mark and the glass. They are not fills. Content sits on solid void. Text stays high-contrast ink.</p>
+      </section>
+
+      <section id="type">
+        <p class="eyebrow">03 · Type</p>
+        <h2>Jost</h2>
+        <p class="type-display">TETRA</p>
+        <p class="type-ui">Digital citizenship · Daily discovery · Regional regency</p>
+        <p>One family. Display and nav: uppercase, tracked. Body: sentence case. The wordmark letterforms are locked — use the SVG, do not redraw.</p>
+      </section>
+
+      <section id="chrome">
+        <p class="eyebrow">04 · Chrome</p>
+        <h2>One top. Two triangles. One footer.</h2>
+        <p>Glass only on bar, triangles, and footer. This page is the spec: scroll to collapse the bar, click the top-left triangle to open it, click the bottom-right triangle or reach the end to raise the footer.</p>
+        <div class="clip-cards">
+          <article>
+            <header>Top bar</header>
+            <code>polygon(0 0, 100% 0, 100% 100%, 0 100%)</code>
+            <p>Full width. Sharp. No triangle at rest.</p>
+          </article>
+          <article>
+            <header>Top-left tri</header>
+            <code>polygon(0 0, 100% 0, 0 100%)</code>
+            <p>~120px. Green icon in the corner. Morph of the same element.</p>
+          </article>
+          <article>
+            <header>Dock tri</header>
+            <code>polygon(100% 100%, 0 100%, 100% 0)</code>
+            <p>Always visible. Clear hypotenuse. Opens the footer.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="pattern">
+        <p class="eyebrow">05 · Pattern</p>
+        <h2>The field is the mark, tiled</h2>
+        <div class="pattern-demo" data-pattern></div>
+        <p>Tessellate Tetrahedron G into a triangular field for screens. Use the trim ribbon as a divider. Print plates in <code>Backgrounds-and-Patterns/</code> and <code>Ready-Images/</code> stay at full density for large format — they are not UI fills.</p>
+        <div class="plates-row">
+          <figure>
+            <img src="/Logos/Tetra-Grids-Logo-2.1.png" alt="Tetra Grids logo 2.1, the G master plate" />
+            <figcaption>Logos/Tetra-Grids-Logo-2.1.png</figcaption>
+          </figure>
+          <figure>
+            <img src="/Backgrounds-and-Patterns/Fancy-Print-Tetra-Logo[SMALL][1920].png" alt="Tessellated tetra field print" />
+            <figcaption>Fancy-Print tessellation plate</figcaption>
+          </figure>
+        </div>
+      </section>
+
+      <section id="builds">
+        <p class="eyebrow">06 · Builds</p>
+        <h2>Vite first</h2>
+        <div class="builds">
+          <article>
+            <h3>vite-ui</h3>
+            <p>Apps and future Tetra clients. Import tokens + chrome. Solid content. Default.</p>
+          </article>
+          <article>
+            <h3>vite-site</h3>
+            <p>Landings, docs, this guide. Same chrome. Static Vite.</p>
+          </article>
+          <article>
+            <h3>vite-pdf</h3>
+            <p>Decks and one-pagers. <code>print.css</code>. No glass. Print or Playwright PDF.</p>
+          </article>
+          <article>
+            <h3>mark</h3>
+            <p>SVG in <code>brand/geometry/</code>. PNG masters in <code>Logos/</code>.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="use">
+        <p class="eyebrow">07 · Use</p>
+        <h2>For humans and agents</h2>
+        <p>Skills in <code>.cursor/skills/</code> teach app design from this system. Tokens are <code>brand/tokens.css</code> and <code>brand/tokens.json</code>. Do not invent a second nav. Do not round a corner.</p>
+      </section>
+    </main>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>

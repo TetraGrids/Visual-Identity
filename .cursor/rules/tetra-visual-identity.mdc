@@ -1,0 +1,14 @@
+---
+description: Tetra.Earth visual identity — void, triad, radius 0, Vite chrome, Tetrahedron G
+alwaysApply: true
+---
+
+# Tetra visual identity
+
+When designing or coding any Tetra surface, read `brand/GUIDE.md` and apply `.cursor/skills/tetra-brand` plus `.cursor/skills/tetra-vite-ui` (or `tetra-pdf` for print).
+
+- Void `#050705`. Radius 0. Jost. Green `#22c55e` primary. Violet and orange are glows only.
+- Mark is Tetrahedron G (`brand/geometry/tetrahedron-g.svg`).
+- Default build is Vite. Import `brand/tokens.css` and `brand/chrome.css`.
+- One top chrome element: full bar at rest, morphs to top-left triangle on scroll.
+- Bottom-right dock triangle opens the sliding footer. Glass only on chrome.
