@@ -41,14 +41,13 @@ Violet and orange are not fills for UI chrome. They ride the mark and glass as b
 
 ## Chrome (vite-ui / vite-site)
 
-Glass exists only on the top bar, the two triangles, and the footer. Content is solid void.
+Glass exists only on the top bar, the top-left corner (after the bar is gone), the dock triangle, and the footer. Content is solid void.
 
-Top chrome is **one element**:
+Top chrome is **two layers**, not a morph:
 
 - Page top: sharp full-width glass nav bar. No triangle.
-- On scroll: that bar morphs into a top-left glass right-triangle  
-  `clip-path: polygon(0 0, 100% 0, 0 100%, 0 100%)` (reads as `polygon(0 0, 100% 0, 0 100%)`), ~120px, green icon in the corner. Four points so the bar can interpolate.
-- Click the triangle to expand the bar again.
+- On scroll: the bar **smokes out** — width collapses left, opacity and blur drop first (`--tetra-smoke`).
+- The top-left glass triangle **crossfades underneath** as the bar goes ghostly, solid as the bar finishes. Not a morph. Click it to bring the bar back; the triangle hides while the bar smokes in.
 
 Bottom-right: always-visible smaller glass triangle  
 `clip-path: polygon(100% 100%, 0 100%, 100% 0)` with a clear hypotenuse.
@@ -67,11 +66,20 @@ Click it, or reach page bottom: sharp footer slides up from the bottom with link
 
 Keep pattern opacity low on screens. Prints may go full density.
 
+## Buttons
+
+Use class `tetra-btn` from `brand/buttons.css`. Radius stays 0. Gold is an interaction accent, not a triad fill.
+
+- Hover / focus: a **45° gold line** starts immediately from the bottom-right (transform sweep, not an animated gradient), 80% opacity in flight, **pauses** in the last pixel at the top-left at **60%**. The button **glows** (opacity on a static radial, not animated box-shadow). **No corner triangle.**
+- Mouse out: the line eases back out the same diagonal (`cubic-bezier(0.7, 0, 0.3, 1)`).
+
+Do not invent a second hover sheen. Do not round the control.
+
 ## Build types
 
 | Type | When | How |
 | --- | --- | --- |
-| `vite-ui` | Apps, dashboards, future Tetra clients | Vite. Import tokens + chrome. Solid content. |
+| `vite-ui` | Apps, dashboards, future Tetra clients | Vite. Import tokens + chrome + buttons. Solid content. |
 | `vite-site` | Marketing, docs, this guide, landings | Vite static. Same chrome. |
 | `vite-pdf` | Decks, one-pagers, print | Vite page + `print.css`. No glass. Browser print or Playwright PDF. |
 | `mark` | Logos, social, favicons | SVG from `brand/geometry/`. PNG masters in `Logos/`. |
@@ -83,6 +91,7 @@ Default is **vite-ui**. Do not start a new Tetra surface in WordPress, Create Re
 - Do put the green icon in the collapsed top triangle.
 - Do keep the dock hypotenuse visible.
 - Do use glass only on bar / triangles / footer.
+- Do use `.tetra-btn` for the gold sweep (line pauses; no corner triangle).
 - Don't round corners.
 - Don't use violet or orange as large solid fills.
 - Don't put the mark on a light field unless printing invert (`print.css`).

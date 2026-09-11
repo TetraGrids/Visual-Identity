@@ -2,8 +2,8 @@
 
 This repo is the public brand system for tetra.earth.
 
-1. Read [brand/GUIDE.md](brand/GUIDE.md).
-2. Apply `.cursor/skills/tetra-brand` for any Tetra surface.
+1. Apply `tetra-visual` (keep `~/.cursor/skills/tetra-visual/SKILL.md` byte-identical to `.cursor/skills/tetra-visual/SKILL.md`).
+2. Read [brand/GUIDE.md](brand/GUIDE.md).
 3. Apply `.cursor/skills/tetra-vite-ui` for websites and apps.
 4. Apply `.cursor/skills/tetra-pdf` for PDFs.
 

@@ -76,18 +76,18 @@
 
       <section id="chrome">
         <p class="eyebrow">04 · Chrome</p>
-        <h2>One top. Two triangles. One footer.</h2>
-        <p>Glass only on bar, triangles, and footer. This page is the spec: scroll to collapse the bar, click the top-left triangle to open it, click the bottom-right triangle or reach the end to raise the footer.</p>
+        <h2>One top. Dock. Footer.</h2>
+        <p>Glass only on bar, the late corner, dock, and footer. Scroll: the bar smokes out (width + opacity). The top-left triangle appears only when the bar is fully gone. Click it to bring the bar back. Click the bottom-right triangle or reach the end to raise the footer.</p>
         <div class="clip-cards">
           <article>
             <header>Top bar</header>
-            <code>polygon(0 0, 100% 0, 100% 100%, 0 100%)</code>
-            <p>Full width. Sharp. No triangle at rest.</p>
+            <code>width + opacity + blur</code>
+            <p>Full width. Smokes left until fully gone.</p>
           </article>
           <article>
             <header>Top-left tri</header>
             <code>polygon(0 0, 100% 0, 0 100%)</code>
-            <p>~120px. Green icon in the corner. Morph of the same element.</p>
+            <p>~120px. Appears at the same instant the bar hits zero. Not a morph.</p>
           </article>
           <article>
             <header>Dock tri</header>
@@ -137,10 +137,22 @@
         </div>
       </section>
 
+      <section id="controls">
+        <p class="eyebrow">07 · Controls</p>
+        <h2>Gold sweep</h2>
+        <p>Hover a button. A 45° gold line starts immediately from the bottom-right, holds at 80% opacity, then pauses in the last pixel at 60%. No corner triangle. The button glows. Mouse out: the line eases back out. The strip moves with transform, not an animated gradient.</p>
+        <div class="btn-row">
+          <button class="tetra-btn tetra-btn--primary" type="button">Primary</button>
+          <button class="tetra-btn" type="button">Default</button>
+          <a class="tetra-btn tetra-btn--ghost" href="#use">Ghost link</a>
+          <button class="tetra-btn" type="button" disabled>Disabled</button>
+        </div>
+      </section>
+
       <section id="use">
-        <p class="eyebrow">07 · Use</p>
+        <p class="eyebrow">08 · Use</p>
         <h2>For humans and agents</h2>
-        <p>Skills in <code>.cursor/skills/</code> teach app design from this system. Tokens are <code>brand/tokens.css</code> and <code>brand/tokens.json</code>. Do not invent a second nav. Do not round a corner.</p>
+        <p>Skills in <code>.cursor/skills/</code> teach app design from this system. Tokens are <code>brand/tokens.css</code> and <code>brand/tokens.json</code>. Buttons are <code>brand/buttons.css</code> with class <code>tetra-btn</code>. Do not invent a second nav. Do not round a corner.</p>
       </section>
     </main>
     <script type="module" src="/src/main.js"></script>

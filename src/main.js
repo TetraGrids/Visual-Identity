@@ -1,5 +1,6 @@
 import "../brand/tokens.css"
 import "../brand/chrome.css"
+import "../brand/buttons.css"
 import "./guide.css"
 import { mountTetraChrome } from "../brand/chrome.js"
 import gMark from "../brand/geometry/tetrahedron-g.svg?raw"
@@ -16,6 +17,7 @@ mountTetraChrome({
     { href: "#color", label: "Triad" },
     { href: "#chrome", label: "Chrome" },
     { href: "#builds", label: "Builds" },
+    { href: "#controls", label: "Controls" },
   ],
   footer: [
     { href: "#mark", label: "Mark" },

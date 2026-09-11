@@ -33,7 +33,11 @@ Jost only. Display and nav: uppercase + tracked. Body: sentence case, high contr
 
 ## Chrome
 
-If the surface is a website or app, follow [tetra-vite-ui](../tetra-vite-ui/SKILL.md). Glass only on bar, triangles, footer.
+If the surface is a website or app, follow `tetra-visual` and `tetra-vite-ui`. Glass only on bar, triangles, footer.
+
+## Buttons
+
+Import `brand/buttons.css`. Use `.tetra-btn`. Hover: gold strip via `transform`, 80% then 60%, line pauses, no corner triangle. Glow is radial opacity. Mouse out reverses. Gold is interaction only.
 
 ## Builds
 

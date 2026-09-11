@@ -12,6 +12,8 @@
   --tetra-green: #22c55e;
   --tetra-violet: #8b5cf6;
   --tetra-orange: #f97316;
+  --tetra-gold: #f0d34a;
+  --tetra-gold-line: #ffe566;
 
   /* Glass — chrome only */
   --tetra-glass: rgba(5, 7, 5, 0.52);
@@ -44,7 +46,9 @@
 
   /* Motion */
   --tetra-ease: cubic-bezier(0.4, 0, 0.2, 1);
+  --tetra-ease-shimmer: cubic-bezier(0.7, 0, 0.3, 1);
   --tetra-dur: 0.55s;
+  --tetra-smoke: 0.72s;
 
   color-scheme: dark;
   font-family: var(--tetra-font);

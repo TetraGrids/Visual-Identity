@@ -14,6 +14,7 @@ Tetra.Earth visual identity: Tetrahedron G, logos, patterns, brand guide, and pu
 
 Public, for anyone designing Tetra apps:
 
+- `.cursor/skills/tetra-visual` — machine-wide visual identity (keep identical to `~/.cursor/skills/tetra-visual`)
 - `.cursor/skills/tetra-brand` — identity, mark, color, type, builds
 - `.cursor/skills/tetra-vite-ui` — Vite chrome (bar → triangle, dock, footer)
 - `.cursor/skills/tetra-pdf` — print / PDF

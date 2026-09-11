@@ -273,6 +273,13 @@ figcaption {
   background: #000;
 }
 
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin: 32px 0 8px;
+}
+
 #use {
   padding-bottom: 160px;
 }

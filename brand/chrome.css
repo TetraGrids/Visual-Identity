@@ -5,6 +5,12 @@
   top: 0;
   left: 0;
   z-index: 80;
+  width: 100%;
+  height: 0;
+  pointer-events: none;
+}
+
+.tetra-top__bar {
   display: flex;
   align-items: center;
   gap: 24px;
@@ -12,44 +18,82 @@
   height: var(--tetra-bar-h);
   padding: 0 28px;
   overflow: hidden;
-  cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
+  pointer-events: auto;
+  transform-origin: left center;
   color: var(--tetra-ink);
   background: var(--tetra-glass);
-  border: none;
   border-bottom: var(--tetra-line) solid var(--tetra-glass-border);
   box-shadow: var(--tetra-glow-triad);
   backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
   -webkit-backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
-  clip-path: polygon(0 0, 100% 0, 100% 100%, 0 100%);
+  position: relative;
+  z-index: 2;
+  opacity: 1;
+  filter: blur(0);
   transition:
-    width var(--tetra-dur) var(--tetra-ease),
-    height var(--tetra-dur) var(--tetra-ease),
-    padding var(--tetra-dur) var(--tetra-ease),
-    clip-path var(--tetra-dur) var(--tetra-ease),
-    border-color var(--tetra-dur) var(--tetra-ease),
-    box-shadow var(--tetra-dur) var(--tetra-ease);
+    width var(--tetra-smoke) var(--tetra-ease),
+    padding var(--tetra-smoke) var(--tetra-ease),
+    opacity 0.48s var(--tetra-ease),
+    filter 0.48s var(--tetra-ease),
+    box-shadow 0.48s var(--tetra-ease);
 }
 
-.tetra-top.is-tri {
+.tetra-top.is-collapsed .tetra-top__bar {
+  width: 0;
+  padding-left: 0;
+  padding-right: 0;
+  opacity: 0;
+  filter: blur(16px);
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.tetra-top__corner {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: flex;
+  align-items: flex-start;
   width: var(--tetra-tri);
   height: var(--tetra-tri);
   padding: 16px 0 0 16px;
-  align-items: flex-start;
-  border-bottom: none;
-  clip-path: polygon(0 0, 100% 0, 0 100%, 0 100%);
+  cursor: pointer;
+  appearance: none;
+  -webkit-appearance: none;
+  color: var(--tetra-green);
+  background: var(--tetra-glass);
+  border: none;
+  box-shadow: var(--tetra-glow-triad);
+  backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  -webkit-backdrop-filter: blur(var(--tetra-glass-blur)) saturate(1.35);
+  clip-path: polygon(0 0, 100% 0, 0 100%);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition:
+    opacity 0.36s var(--tetra-ease),
+    visibility 0s linear 0.36s;
 }
 
-.tetra-top.is-tri::after {
+.tetra-top.is-collapsed .tetra-top__corner {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition:
+    opacity 0.42s var(--tetra-ease) 0.06s,
+    visibility 0s linear 0s;
+}
+
+.tetra-top__corner::after {
   content: "";
   position: absolute;
   inset: 0;
   pointer-events: none;
   background: linear-gradient(
-    to bottom left,
+    to top left,
     transparent calc(50% - 0.6px),
-    rgba(244, 247, 244, 0.42) 50%,
+    rgba(244, 247, 244, 0.5) 50%,
     transparent calc(50% + 0.6px)
   );
 }
@@ -70,12 +114,8 @@
   display: block;
 }
 
-.tetra-top.is-tri .tetra-top__mark {
-  width: 32px;
-  height: 32px;
-}
-
-.tetra-top.is-tri .tetra-top__mark svg {
+.tetra-top__corner .tetra-top__mark,
+.tetra-top__corner .tetra-top__mark svg {
   width: 32px;
   height: 32px;
 }
@@ -85,17 +125,7 @@
   align-items: center;
   gap: 28px;
   margin-left: auto;
-  opacity: 1;
-  transform: translateY(0);
-  transition:
-    opacity 0.28s var(--tetra-ease),
-    transform 0.28s var(--tetra-ease);
-}
-
-.tetra-top.is-tri .tetra-top__nav {
-  opacity: 0;
-  pointer-events: none;
-  transform: translateY(-8px);
+  white-space: nowrap;
 }
 
 .tetra-top__nav a {

@@ -24,18 +24,23 @@ export function mountTetraChrome({
   footer = [],
   blurb = "Proof of attention",
 } = {}) {
-  const top = el(`
-    <button class="tetra-top" type="button" aria-label="Tetra navigation" aria-expanded="true" data-tetra-top>
-      <span class="tetra-top__mark">${ICON}</span>
-      <nav class="tetra-top__nav"></nav>
-    </button>
+  const shell = el(`
+    <div class="tetra-top" data-tetra-top>
+      <div class="tetra-top__bar">
+        <span class="tetra-top__mark">${ICON}</span>
+        <nav class="tetra-top__nav"></nav>
+      </div>
+      <button class="tetra-top__corner" type="button" aria-label="Expand navigation" aria-hidden="true" tabindex="-1">
+        <span class="tetra-top__mark">${ICON}</span>
+      </button>
+    </div>
   `)
-  const navEl = top.querySelector(".tetra-top__nav")
+  const navEl = shell.querySelector(".tetra-top__nav")
+  const corner = shell.querySelector(".tetra-top__corner")
   for (const item of nav) {
     const a = document.createElement("a")
     a.href = item.href
     a.textContent = item.label
-    a.addEventListener("click", (e) => e.stopPropagation())
     navEl.append(a)
   }
 
@@ -66,16 +71,16 @@ export function mountTetraChrome({
     links.append(a)
   }
 
-  root.prepend(top)
+  root.prepend(shell)
   root.append(dock, foot)
 
   let pinnedOpen = false
   let footerPinned = false
 
   const setTop = (expanded) => {
-    top.classList.toggle("is-tri", !expanded)
-    top.setAttribute("aria-expanded", String(expanded))
-    top.setAttribute("aria-label", expanded ? "Tetra navigation" : "Expand navigation")
+    shell.classList.toggle("is-collapsed", !expanded)
+    corner.setAttribute("aria-hidden", String(expanded))
+    corner.tabIndex = expanded ? -1 : 0
   }
 
   const setFooter = (open) => {
@@ -99,14 +104,9 @@ export function mountTetraChrome({
     }
   }
 
-  top.addEventListener("click", () => {
-    if (top.classList.contains("is-tri")) {
-      pinnedOpen = true
-      setTop(true)
-    } else if (!atTop()) {
-      pinnedOpen = false
-      setTop(false)
-    }
+  corner.addEventListener("click", () => {
+    pinnedOpen = true
+    setTop(true)
   })
 
   dock.addEventListener("click", () => {
@@ -123,5 +123,5 @@ export function mountTetraChrome({
   window.addEventListener("resize", sync)
   sync()
 
-  return { top, dock, foot, sync }
+  return { top: shell, dock, foot, sync }
 }

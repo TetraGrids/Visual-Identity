@@ -5,10 +5,11 @@ alwaysApply: true
 
 # Tetra visual identity
 
-When designing or coding any Tetra surface, read `brand/GUIDE.md` and apply `.cursor/skills/tetra-brand` plus `.cursor/skills/tetra-vite-ui` (or `tetra-pdf` for print).
+When designing or coding any Tetra surface, apply `tetra-visual` (global + `.cursor/skills/tetra-visual`; keep those two files identical). In this repo also read `brand/GUIDE.md` and `tetra-vite-ui` (or `tetra-pdf` for print).
 
 - Void `#050705`. Radius 0. Jost. Green `#22c55e` primary. Violet and orange are glows only.
 - Mark is Tetrahedron G (`brand/geometry/tetrahedron-g.svg`).
 - Default build is Vite. Import `brand/tokens.css` and `brand/chrome.css`.
-- One top chrome element: full bar at rest, morphs to top-left triangle on scroll.
+- One top chrome: bar smokes out (width + opacity); top-left triangle appears only when the bar is fully gone.
 - Bottom-right dock triangle opens the sliding footer. Glass only on chrome.
+- Buttons: gold line pauses; no parked corner triangle. Sweep with transform, not animated gradient stops.
