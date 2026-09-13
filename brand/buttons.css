@@ -1,4 +1,4 @@
-/* Tetra buttons. Gold 45° strip moves with transform. No gradient-stop animation. No corner triangle. */
+/* Tetra buttons. Gold 45° sheen: static gradient, transform only. Instant outside glow. */
 
 .tetra-btn {
   position: relative;
@@ -36,6 +36,7 @@
 .tetra-btn:disabled {
   cursor: not-allowed;
   opacity: 0.38;
+  filter: none;
 }
 
 .tetra-btn:focus-visible {
@@ -43,105 +44,70 @@
   outline-offset: 3px;
 }
 
-/* Soft gold glow — static paint, opacity only. */
-.tetra-btn::after {
-  content: "";
-  position: absolute;
-  inset: -28px;
-  z-index: 0;
-  pointer-events: none;
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 229, 102, 0.32) 0%,
-    rgba(240, 211, 74, 0.12) 42%,
-    transparent 70%
-  );
-  opacity: 0;
-  transition: opacity 0.75s var(--tetra-ease-shimmer);
+/* Instant glow outside the clip. No transition. */
+.tetra-btn:hover,
+.tetra-btn:focus-visible,
+.tetra-btn.is-hot {
+  filter:
+    drop-shadow(0 0 8px rgba(255, 229, 102, 0.5))
+    drop-shadow(0 0 22px rgba(240, 211, 74, 0.28));
 }
 
-.tetra-btn--primary::after {
-  background: radial-gradient(
-    ellipse at center,
-    rgba(255, 229, 102, 0.28) 0%,
-    rgba(34, 197, 94, 0.22) 45%,
-    transparent 70%
-  );
+.tetra-btn--primary:hover,
+.tetra-btn--primary:focus-visible,
+.tetra-btn--primary.is-hot {
+  filter:
+    drop-shadow(0 0 8px rgba(255, 229, 102, 0.45))
+    drop-shadow(0 0 18px rgba(34, 197, 94, 0.35));
 }
 
-.tetra-btn:hover::after,
-.tetra-btn:focus-visible::after,
-.tetra-btn.is-hot::after {
-  opacity: 1;
-}
-
-/* Gold band: painted once, swept with translate3d. */
+/* Static diagonal band. Hover: BR → off TL. Leave: reverse. */
 .tetra-btn::before {
   content: "";
   position: absolute;
-  top: 50%;
-  left: 50%;
+  inset: 0;
   z-index: 1;
-  width: 220%;
-  height: 220%;
   pointer-events: none;
   background: linear-gradient(
-    to bottom,
+    135deg,
+    transparent 0%,
     transparent calc(50% - 5px),
     rgba(255, 229, 102, 0.22) calc(50% - 1.6px),
     var(--tetra-gold-line) 50%,
     rgba(255, 229, 102, 0.22) calc(50% + 1.6px),
-    transparent calc(50% + 5px)
+    transparent calc(50% + 5px),
+    transparent 100%
   );
   opacity: 0;
-  transform: translate(-50%, -50%) rotate(-45deg) translate3d(0, 42%, 0);
+  transform: translate3d(120%, 120%, 0);
   transition:
     transform 0.75s var(--tetra-ease-shimmer),
-    opacity 0.2s linear;
+    opacity 0.1s linear 0.65s;
 }
 
 .tetra-btn:hover::before,
 .tetra-btn:focus-visible::before,
 .tetra-btn.is-hot::before {
-  opacity: 0.6;
-  transform: translate(-50%, -50%) rotate(-45deg) translate3d(0, calc(-38% + 8px), 0);
-  animation: tetra-shine-in 0.75s linear forwards;
+  opacity: 0.8;
+  transform: translate3d(-120%, -120%, 0);
   transition:
     transform 0.75s cubic-bezier(0.15, 0, 0.25, 1),
     opacity 0s linear;
 }
 
-@keyframes tetra-shine-in {
-  0% {
-    opacity: 0.8;
-  }
-
-  72% {
-    opacity: 0.8;
-  }
-
-  100% {
-    opacity: 0.6;
-  }
-}
-
-.tetra-btn:disabled::before,
-.tetra-btn:disabled::after {
+.tetra-btn:disabled::before {
   content: none;
-  animation: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .tetra-btn::before,
-  .tetra-btn::after {
-    animation: none;
-    transition: opacity 0.15s linear;
+  .tetra-btn::before {
+    transition: none;
   }
 
   .tetra-btn:hover::before,
   .tetra-btn:focus-visible::before,
   .tetra-btn.is-hot::before {
-    opacity: 0.6;
-    transform: translate(-50%, -50%) rotate(-45deg) translate3d(0, calc(-38% + 8px), 0);
+    transform: translate3d(-120%, -120%, 0);
+    opacity: 0.8;
   }
 }

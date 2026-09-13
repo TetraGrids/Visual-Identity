@@ -70,8 +70,8 @@ Keep pattern opacity low on screens. Prints may go full density.
 
 Use class `tetra-btn` from `brand/buttons.css`. Radius stays 0. Gold is an interaction accent, not a triad fill.
 
-- Hover / focus: a **45° gold line** starts immediately from the bottom-right (transform sweep, not an animated gradient), 80% opacity in flight, **pauses** in the last pixel at the top-left at **60%**. The button **glows** (opacity on a static radial, not animated box-shadow). **No corner triangle.**
-- Mouse out: the line eases back out the same diagonal (`cubic-bezier(0.7, 0, 0.3, 1)`).
+- Hover / focus: a **45° gold line** starts immediately and **travels all the way off** the top-left (transform of a static gradient). Opacity **80%**. **No park, no corner triangle.** Glow is **instant** (`drop-shadow`, no animation) and sits **outside** the button.
+- Mouse out: the line **reverses** (TL → off BR) and disappears. Glow snaps off.
 
 Do not invent a second hover sheen. Do not round the control.
 
@@ -91,7 +91,7 @@ Default is **vite-ui**. Do not start a new Tetra surface in WordPress, Create Re
 - Do put the green icon in the collapsed top triangle.
 - Do keep the dock hypotenuse visible.
 - Do use glass only on bar / triangles / footer.
-- Do use `.tetra-btn` for the gold sweep (line pauses; no corner triangle).
+- Do use `.tetra-btn` for the gold full-pass sheen (no park).
 - Don't round corners.
 - Don't use violet or orange as large solid fills.
 - Don't put the mark on a light field unless printing invert (`print.css`).

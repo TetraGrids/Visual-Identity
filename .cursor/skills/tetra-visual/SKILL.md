@@ -48,7 +48,7 @@ Implement with `brand/chrome.css` + `brand/chrome.js`. Do not add a second nav. 
 
 Import `brand/buttons.css`. Class `tetra-btn`. Radius 0.
 
-Hover: a 45° gold strip (`transform` + `opacity`, not animated gradient stops) from the bottom-right, 80% in flight, **pauses** at the top-left at 60%. Glow is opacity on a static radial. **No corner triangle.** Mouse out reverses. Do not invent another sheen.
+Hover: a 45° gold sheen (`transform` of a static gradient) from off the bottom-right **all the way off** the top-left at 80%. No park, no corner triangle. Glow is instant `drop-shadow` outside the button. Mouse out reverses the sheen and snaps the glow off.
 
 ## Builds
 

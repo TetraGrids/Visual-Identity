@@ -51,13 +51,13 @@ Do not add a second header, hamburger, or floating circular menu.
 - Triad: green `#22c55e` primary, violet `#8b5cf6` + orange `#f97316` as glows.
 - High-contrast text. Jost. Uppercase nav.
 - Pattern fields stay behind content, never on the glass.
-- Buttons: `.tetra-btn`. Transform-swept gold strip, 80%→60%, line pauses, no corner triangle. Glow via radial opacity.
+- Buttons: `.tetra-btn`. Transform sheen BR→off TL at 80%. Instant outside drop-shadow. Reverse on leave.
 
 ## Checklist
 
 - [ ] Vite project, not another bundler
 - [ ] tokens + chrome + buttons imported
-- [ ] Buttons use `.tetra-btn` (45° transform sweep, line pauses, no corner triangle)
+- [ ] Buttons use `.tetra-btn` (full-pass transform sheen, instant outside glow)
 - [ ] Bar smokes out; corner appears only when bar is gone
 - [ ] Dock triangle, sliding footer
 - [ ] No border-radius
