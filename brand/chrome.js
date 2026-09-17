@@ -27,7 +27,7 @@ export function mountTetraChrome({
   const shell = el(`
     <div class="tetra-top" data-tetra-top>
       <div class="tetra-top__bar">
-        <span class="tetra-top__mark">${ICON}</span>
+        <a class="tetra-top__mark" href="${home}" aria-label="Tetra home">${ICON}</a>
         <nav class="tetra-top__nav"></nav>
       </div>
       <button class="tetra-top__corner" type="button" aria-label="Expand navigation" aria-hidden="true" tabindex="-1">
@@ -74,8 +74,18 @@ export function mountTetraChrome({
   root.prepend(shell)
   root.append(dock, foot)
 
+  const applyFooterPad = () => {
+    const h = Math.ceil(foot.offsetHeight) + 24
+    document.documentElement.style.setProperty("--tetra-footer-pad", `${h}px`)
+  }
+  applyFooterPad()
+  if (typeof ResizeObserver !== "undefined") {
+    new ResizeObserver(applyFooterPad).observe(foot)
+  }
+
   let pinnedOpen = false
-  let footerPinned = false
+  // auto: open at page bottom; open/closed: dock click wins until scroll leaves bottom
+  let footerMode = "auto"
 
   const setTop = (expanded) => {
     shell.classList.toggle("is-collapsed", !expanded)
@@ -97,10 +107,16 @@ export function mountTetraChrome({
       setTop(false)
     }
 
-    if (atBottom()) {
+    if (!atBottom() && footerMode === "closed") {
+      footerMode = "auto"
+    }
+
+    if (footerMode === "open") {
       setFooter(true)
-    } else if (!footerPinned) {
+    } else if (footerMode === "closed") {
       setFooter(false)
+    } else {
+      setFooter(atBottom())
     }
   }
 
@@ -110,13 +126,9 @@ export function mountTetraChrome({
   })
 
   dock.addEventListener("click", () => {
-    if (foot.classList.contains("is-open") && !atBottom()) {
-      footerPinned = false
-      setFooter(false)
-    } else {
-      footerPinned = true
-      setFooter(true)
-    }
+    const open = foot.classList.contains("is-open")
+    footerMode = open ? "closed" : "open"
+    setFooter(!open)
   })
 
   window.addEventListener("scroll", sync, { passive: true })

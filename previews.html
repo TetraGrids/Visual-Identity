@@ -1,0 +1,452 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Tetra.Earth — UI previews</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Jost:wght@400;500;600&display=swap" rel="stylesheet" />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <a class="skip" href="#content">Skip to content</a>
+    <main class="tetra-main page kit" id="content">
+      <div class="banner">
+        <p class="note note--warn">Preview demo · Specimens only · <a href="/#demos">All demos</a> · <a href="/">Guide</a> · <a href="/landing.html">Landing UI</a></p>
+      </div>
+
+      <section id="top">
+        <p class="eyebrow">Tetra.Earth · Vite UI</p>
+        <h1>UI shapes</h1>
+        <p class="lede">Every control the landing is built from. Solid void. Radius 0. Glass stays on chrome. Copy a class, don’t invent a second one.</p>
+        <nav class="index" aria-label="Specimens">
+          <a class="chip" href="#type">Type</a>
+          <a class="chip" href="#controls">Controls</a>
+          <a class="chip" href="#fields">Fields</a>
+          <a class="chip" href="#stats">Stats</a>
+          <a class="chip" href="#chips">Chips</a>
+          <a class="chip" href="#cards">Cards</a>
+          <a class="chip" href="#data">Data</a>
+          <a class="chip" href="#asks">Accordion</a>
+          <a class="chip" href="#tabs">Tabs</a>
+          <a class="chip" href="#bones">Skeleton</a>
+          <a class="chip" href="#stream">Marquee</a>
+          <a class="chip" href="#pipe">Pipeline</a>
+          <a class="chip" href="#land">Landing</a>
+          <a class="chip" href="#price">Price</a>
+          <a class="chip" href="#overlays">Overlays</a>
+        </nav>
+      </section>
+
+      <section id="type">
+        <p class="eyebrow">Type</p>
+        <h2>Jost, tracked</h2>
+        <p class="lede">Display and nav stay uppercase. Body stays sentence case and high contrast.</p>
+        <div class="spec">
+          <p class="eyebrow">Eyebrow</p>
+          <h1>Display</h1>
+          <h2>Section</h2>
+          <h3>Panel title</h3>
+          <p>Body ink on void. Dim copy uses the muted green-gray, never a gray on gray that drops out.</p>
+          <p class="spec__name">h1 h2 h3 .eyebrow .lede</p>
+        </div>
+      </section>
+
+      <section id="controls">
+        <p class="eyebrow">Controls</p>
+        <h2>Gold sweep</h2>
+        <p>Hover. The sheen runs off the top-left. Glow is instant and outside. Disabled has neither.</p>
+        <div class="spec">
+          <div class="actions">
+            <button class="tetra-btn tetra-btn--primary" type="button">Primary</button>
+            <button class="tetra-btn" type="button">Default</button>
+            <a class="tetra-btn tetra-btn--ghost" href="#fields">Ghost</a>
+            <button class="tetra-btn tetra-btn--sm" type="button">Small</button>
+            <button class="tetra-btn tetra-btn--sm tetra-btn--primary" type="button">Small primary</button>
+            <button class="tetra-btn" type="button" disabled>Disabled</button>
+          </div>
+          <p class="spec__name">.tetra-btn .tetra-btn--primary .tetra-btn--ghost .tetra-btn--sm :disabled</p>
+        </div>
+      </section>
+
+      <section id="fields">
+        <p class="eyebrow">Fields</p>
+        <h2>Invite row and full form</h2>
+        <form class="form-row" data-local-form data-open="invite">
+          <label class="field">
+            <span class="visually-hidden">Email</span>
+            <input type="email" placeholder="Email for your invite" required />
+          </label>
+          <button class="tetra-btn tetra-btn--primary" type="submit">Request invite</button>
+        </form>
+        <div class="grid grid--2" style="margin-top: 18px">
+          <form class="panel fields" data-local-form>
+            <label class="field"><span>Email</span><input type="email" placeholder="you@region" /></label>
+            <label class="field"><span>Region</span><input type="text" placeholder="Where you’re from" /></label>
+            <label class="field">
+              <span>Locale</span>
+              <select>
+                <option>Regional</option>
+                <option>National</option>
+                <option>Global</option>
+              </select>
+            </label>
+            <label class="field"><span>Offer</span><textarea placeholder="What it takes to complete"></textarea></label>
+            <label class="check"><input type="checkbox" /> <span style="text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--tetra-ink-dim)">I will fill out my Passport.</span></label>
+            <label class="check"><input type="radio" name="role" checked /> <span style="text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--tetra-ink-dim)">Citizen</span></label>
+            <label class="check"><input type="radio" name="role" /> <span style="text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--tetra-ink-dim)">Founding sponsor</span></label>
+            <label class="field"><span>Range</span><input type="range" min="1" max="24" value="6" /></label>
+            <label class="field"><span>File</span><input type="file" /></label>
+            <button class="tetra-btn" type="submit">Save locally</button>
+            <p data-done hidden>Held in the browser. Nothing left the page.</p>
+          </form>
+          <div class="panel fields">
+            <label class="field"><span>Disabled</span><input value="Locked until 12,000 citizens" disabled /></label>
+            <label class="field"><span>Search</span><input type="search" placeholder="Charts, offers, regions" /></label>
+            <p class="note">Status note. Border is the signal. Not a fill of violet or orange.</p>
+            <p class="note note--warn">Warning note. Gold line only.</p>
+            <p class="pulse"><i></i>Passport filling</p>
+            <p>Specimen clock <span class="clock" data-clock>00:00</span></p>
+          </div>
+        </div>
+        <p class="spec__name">.field .form-row .check .note .note--warn .pulse .clock</p>
+      </section>
+
+      <section id="stats">
+        <p class="eyebrow">Stats</p>
+        <h2>Attention ladder</h2>
+        <div class="stats">
+          <article class="stat"><strong>1</strong><span>RA per day on invite</span></article>
+          <article class="stat"><strong>6</strong><span>Complete passport</span></article>
+          <article class="stat"><strong>24</strong><span>One representation</span></article>
+          <article class="stat"><strong>144</strong><span>Reps to land a region</span></article>
+        </div>
+        <p class="spec__name">.stats .stat</p>
+      </section>
+
+      <section id="chips">
+        <p class="eyebrow">Chips</p>
+        <h2>Square marks</h2>
+        <div class="chips">
+          <span class="chip chip--hot">Live</span>
+          <span class="chip">Passport</span>
+          <span class="chip chip--dim">Pending</span>
+          <span class="chip">Discovery</span>
+          <span class="chip">Recurve</span>
+        </div>
+        <p class="spec__name">.chip .chip--hot .chip--dim — never a pill</p>
+      </section>
+
+      <section id="cards">
+        <p class="eyebrow">Cards</p>
+        <h2>Outcome, quote, person</h2>
+        <div class="grid grid--3" style="margin-top: 22px">
+          <article class="panel outcome">
+            <p class="eyebrow">Passport</p>
+            <h3>Portfolio, not a profile</h3>
+            <p>Who you are, where you’re from, what you’re offering.</p>
+            <div class="metric"><div><b>1–6</b><span>RA / day</span></div></div>
+          </article>
+          <blockquote class="panel quote">
+            <p>Spend RA for clicks on your offers, eyes on your arts, and real followers.</p>
+            <cite>Attention token</cite>
+          </blockquote>
+          <article class="panel person">
+            <span class="avatar">RG</span>
+            <div>
+              <strong>Regional chart</strong>
+              <span>Local RA weighs 2–4×</span>
+              <small>Square mark. Not a circle.</small>
+            </div>
+          </article>
+        </div>
+        <p class="spec__name">.panel .outcome .quote .person .avatar .metric</p>
+      </section>
+
+      <section id="data">
+        <p class="eyebrow">Data</p>
+        <h2>Table and fit bars</h2>
+        <div class="panel" style="margin-top: 22px">
+          <div class="table-wrap">
+            <table>
+              <thead>
+                <tr><th>Project</th><th>Status</th><th>Unlock</th></tr>
+              </thead>
+              <tbody>
+                <tr><td>Passport</td><td><span class="chip chip--hot">Open</span></td><td>Invite</td></tr>
+                <tr><td>Recurve</td><td><span class="chip">Locked</span></td><td>12,000 citizens</td></tr>
+                <tr><td>Projects</td><td><span class="chip chip--dim">Later</span></td><td>618 representatives</td></tr>
+                <tr><td>Earth</td><td><span class="chip chip--dim">Per region</span></td><td>144 representatives</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="bars" style="margin-top: 22px">
+            <div class="bar"><span>Local citizens</span><i><b style="width: 92%"></b></i><em>92</em></div>
+            <div class="bar"><span>Regional charts</span><i><b style="width: 70%"></b></i><em>70</em></div>
+            <div class="bar"><span>National title</span><i><b style="width: 41%"></b></i><em>41</em></div>
+          </div>
+        </div>
+        <p class="spec__name">table .bar</p>
+      </section>
+
+      <section id="asks">
+        <p class="eyebrow">Accordion</p>
+        <h2>One open</h2>
+        <div class="acc" data-acc>
+          <div class="acc__item is-open">
+            <button type="button" aria-expanded="true">What do I need to get started?</button>
+            <p>An invite, then a Passport. Discovery unlocks when the passport is filled.</p>
+          </div>
+          <div class="acc__item">
+            <button type="button" aria-expanded="false">How do I earn RA?</button>
+            <p>Daily, by level. 1 to start. 6 for a complete passport. 24 after one representation.</p>
+          </div>
+          <div class="acc__item">
+            <button type="button" aria-expanded="false">When does Recurve unlock?</button>
+            <p>Globally at 12,000 citizens.</p>
+          </div>
+        </div>
+        <p class="spec__name">.acc [data-acc]</p>
+      </section>
+
+      <section id="tabs">
+        <p class="eyebrow">Tabs</p>
+        <h2>Method switch</h2>
+        <div class="panel" style="margin-top: 22px">
+          <div class="tabs" data-tabs>
+            <button type="button" class="is-on" data-tab="card">Card</button>
+            <button type="button" data-tab="ra">RA</button>
+            <button type="button" data-tab="stake">Stake</button>
+          </div>
+          <div data-tab="card"><p>Card fields live in the overlay specimen. This tab is the switch, not a processor.</p></div>
+          <div data-tab="ra" hidden><p>Alternate method. Local RA weighs more on regional charts.</p></div>
+          <div data-tab="stake" hidden><p>Stake TETRA with 3 fellow activators to found a region.</p></div>
+        </div>
+        <p class="spec__name">.tabs [data-tabs] [data-tab]</p>
+      </section>
+
+      <section id="bones">
+        <p class="eyebrow">Faux loading</p>
+        <h2>Skeleton, then filled</h2>
+        <div class="grid grid--4" style="margin-top: 22px">
+          <div class="panel"><div class="skel skel--line" style="width: 40%"></div><div class="skel skel--lg" style="margin-top: 12px"></div></div>
+          <div class="panel"><div class="skel skel--line" style="width: 50%"></div><div class="skel skel--lg" style="margin-top: 12px"></div></div>
+          <div class="panel"><div class="skel skel--line" style="width: 46%"></div><div class="skel skel--lg" style="margin-top: 12px"></div></div>
+          <div class="panel"><div class="skel skel--line" style="width: 36%"></div><div class="skel skel--lg" style="margin-top: 12px"></div></div>
+        </div>
+        <div class="panel" style="margin-top: 1px">
+          <div class="skel skel--line" style="width: 28%"></div>
+          <div class="skel skel--line" style="width: 72%; margin-top: 12px"></div>
+          <div class="skel skel--line" style="width: 60%; margin-top: 8px"></div>
+          <div class="actions">
+            <div class="skel skel--btn"></div>
+            <div class="skel skel--btn"></div>
+          </div>
+        </div>
+        <p class="spec__name">.skel .skel--line .skel--lg .skel--btn</p>
+      </section>
+
+      <section id="stream">
+        <p class="eyebrow">Marquee</p>
+        <h2>Word strip and cards</h2>
+      </section>
+      <div class="band marquee" aria-hidden="true">
+        <div class="marquee__track">
+          <span>Passport</span><span>Discovery</span><span>Recurve</span><span>Localize</span>
+          <span>Passport</span><span>Discovery</span><span>Recurve</span><span>Localize</span>
+        </div>
+      </div>
+      <div class="band marquee marquee--cards">
+        <div class="marquee__track">
+          <blockquote class="quote"><p>Start earning 1 RA per day by redeeming an invite.</p><cite>Citizen path</cite></blockquote>
+          <blockquote class="quote"><p>Becoming a representative one time increases your daily RA to 24.</p><cite>Recurve</cite></blockquote>
+          <blockquote class="quote"><p>Start earning 1 RA per day by redeeming an invite.</p><cite>Citizen path</cite></blockquote>
+          <blockquote class="quote"><p>Becoming a representative one time increases your daily RA to 24.</p><cite>Recurve</cite></blockquote>
+        </div>
+      </div>
+
+      <section id="pipe">
+        <p class="eyebrow">Pipeline</p>
+        <h2>Steps and mocks</h2>
+        <div class="pipe" data-pipe>
+          <div class="pipe__nav">
+            <button type="button" class="is-on" data-step="a"><b>01</b>Passport</button>
+            <button type="button" data-step="b"><b>02</b>Room</button>
+          </div>
+          <div class="pipe__stage">
+            <div data-panel="a">
+              <div class="mock__head"><p class="pulse"><i></i>Filling</p><span class="chip">1 RA</span></div>
+              <article class="doc"><small>Passport</small><p>Who you are, where you’re from, what you’re offering.</p></article>
+            </div>
+            <div data-panel="b" hidden>
+              <div class="thread">
+                <p>Share what you contributed.</p>
+                <p class="is-out">I’m standing as representative.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <p class="spec__name">.pipe .doc .thread — pauses on hover</p>
+      </section>
+
+      <section id="land">
+        <p class="eyebrow">Landing modules</p>
+        <h2>Case, bleed, mail, status</h2>
+        <div class="rating" style="margin-bottom: 16px"><strong>4.0</strong><b>■■■■</b><span>Faces of tetra</span></div>
+        <div class="case-grid">
+          <article class="case">
+            <div class="identity"><span class="avatar">AM</span><span><strong>Amina</strong><span>Passport · Lagos</span></span><span class="out">Know</span></div>
+            <p>“Filling the Passport takes away the pain of being undiscovered.”</p>
+            <div class="metric"><div><b>1–6</b><span>RA / day</span></div></div>
+          </article>
+          <article class="case">
+            <div class="identity"><span class="avatar">LE</span><span><strong>Leo</strong><span>Discovery · Andes</span></span><span class="out">Know</span></div>
+            <p>“Daily RA spend actually moves the chart.”</p>
+            <div class="metric"><div><b>Daily</b><span>Charts</span></div></div>
+          </article>
+        </div>
+        <article class="bleed" style="margin-top: 22px">
+          <div class="bleed__copy"><p class="eyebrow">01</p><h2>Learns who you are</h2></div>
+          <div class="bleed__mock">
+            <p class="pulse"><span class="scan"><i class="is-on"></i><i></i><i></i><i></i></span> Studying region</p>
+            <ul class="domains"><li>discovery.tetra</li><li>recurve.tetra</li></ul>
+            <article class="contact"><span class="avatar">AM</span><div><strong>Amina</strong><span>Citizen · Lagos</span><small>amina@lagos.region</small></div></article>
+            <article class="mail"><small>Subject</small><h4>Eyes on the work</h4><p>Saw <mark>the Andes chart</mark> climb.</p></article>
+            <p><span class="st st--go">Scaling</span> <span class="st st--work">Working</span> <span class="st st--pause">Paused</span></p>
+            <p class="booked">Room booked · Tue 14:00</p>
+          </div>
+        </article>
+        <article class="result">
+          <div class="identity"><span class="avatar">LE</span><span><strong>Leo</strong><span>Discovery</span></span></div>
+          <p>“Charts are accurate.”</p>
+          <div class="result__row">
+            <div><span>Hot replies</span><b>131</b></div>
+            <div><span>Reply rate</span><b>1.1%</b></div>
+            <div><span>RA / eye</span><b>2.33</b></div>
+          </div>
+        </article>
+        <p class="spots">Only <b data-spots>9</b> invite windows left this hour · <span class="clock" data-clock>00:00</span></p>
+        <p class="spec__name">.case .bleed .mail .contact .st .result .rating .spots .booked</p>
+      </section>
+
+      <section id="price">
+        <p class="eyebrow">Price</p>
+        <h2>Earn card and split close</h2>
+        <div class="price">
+          <div class="price__figure">
+            <span class="eyebrow">Daily attention</span>
+            <strong>1–24</strong>
+            <p>RA per day, by role.</p>
+          </div>
+          <div class="panel">
+            <h3>Invite</h3>
+            <p>Passport, daily RA, Discovery, offers.</p>
+            <button class="tetra-btn tetra-btn--primary" type="button" data-open="invite">Request invite</button>
+          </div>
+        </div>
+        <div class="split" style="margin-top: 48px">
+          <h2>Know the full system</h2>
+          <div>
+            <h2>Voice of your region</h2>
+            <button class="tetra-btn" type="button" data-open="login">Login</button>
+          </div>
+        </div>
+        <p class="spec__name">.price .split</p>
+      </section>
+
+      <section id="overlays">
+        <p class="eyebrow">Overlays</p>
+        <h2>Invite, support, login</h2>
+        <p>Same dialogs the landing uses. Card fields are a layout specimen. They are not a checkout.</p>
+        <div class="actions">
+          <button class="tetra-btn tetra-btn--primary" type="button" data-open="invite">Request invite</button>
+          <button class="tetra-btn" type="button" data-open="invite" data-tab="found">I will support tetra</button>
+          <button class="tetra-btn tetra-btn--ghost" type="button" data-open="login">Login</button>
+        </div>
+        <div class="cols" style="margin-top: 36px">
+          <div>
+            <p class="eyebrow">Column footer</p>
+            <p>Page footer, not a second nav. Chrome footer still slides up from the dock.</p>
+          </div>
+          <div>
+            <h4>Products</h4>
+            <a href="#cards">Passport</a>
+            <a href="#cards">Discovery</a>
+          </div>
+          <div>
+            <h4>Journey</h4>
+            <a href="/landing.html">Landing</a>
+            <a href="/">Guide</a>
+          </div>
+          <div>
+            <h4>Resources</h4>
+            <a href="https://know.tetra.earth">Know</a>
+            <a href="https://tetra.earth">tetra.earth</a>
+          </div>
+        </div>
+        <p class="spec__name">dialog.modal .cols</p>
+      </section>
+    </main>
+
+    <dialog class="modal" id="invite">
+      <div class="modal__grid">
+        <aside class="modal__side">
+          <p class="eyebrow">Specimen</p>
+          <h2>Invite modal</h2>
+          <p class="pulse"><i></i>Nothing is charged</p>
+          <p>Clock <span class="clock" data-clock>00:00</span></p>
+        </aside>
+        <div class="modal__main">
+          <div class="modal__bar">
+            <p class="eyebrow" style="margin: 0">Seat</p>
+            <button class="modal__close" type="button" data-close>Close</button>
+          </div>
+          <div class="tabs" data-tabs>
+            <button type="button" class="is-on" data-tab="invite">Request invite</button>
+            <button type="button" data-tab="found">I will support</button>
+          </div>
+          <form class="fields" data-local-form data-tab="invite" style="margin-top: 16px">
+            <label class="field"><span>Email</span><input type="email" required placeholder="you@region" /></label>
+            <label class="field"><span>Locale</span><select><option>Regional</option><option>National</option><option>Global</option></select></label>
+            <label class="check"><input type="checkbox" /> <span style="text-transform: none; letter-spacing: 0; font-size: 14px; color: var(--tetra-ink-dim)">I will fill out my Passport.</span></label>
+            <button class="tetra-btn tetra-btn--primary" type="submit">Request your invite</button>
+            <p data-done hidden>Held here. No invite was sent.</p>
+          </form>
+          <form class="fields" data-local-form data-tab="found" hidden style="margin-top: 16px">
+            <div class="tabs" data-tabs>
+              <button type="button" class="is-on" data-tab="card">Card</button>
+              <button type="button" data-tab="ra">RA</button>
+            </div>
+            <div data-tab="card" class="fields">
+              <label class="field"><span>Card number</span><input placeholder="Model · not collected" autocomplete="off" /></label>
+              <div class="fields fields--2">
+                <label class="field"><span>Expiration</span><input placeholder="MM / YY" autocomplete="off" /></label>
+                <label class="field"><span>Security code</span><input placeholder="CVC" autocomplete="off" /></label>
+              </div>
+            </div>
+            <p data-tab="ra" hidden>Alternate method. No tokens move.</p>
+            <label class="field"><span>Country</span><select><option>Select</option><option>United States</option><option>United Kingdom</option><option>Japan</option></select></label>
+            <button class="tetra-btn" type="submit">I will support tetra</button>
+            <p data-done hidden>Nothing was sent or charged.</p>
+          </form>
+        </div>
+      </div>
+    </dialog>
+
+    <dialog class="modal" id="login">
+      <form class="modal__main fields" data-local-form>
+        <div class="modal__bar">
+          <h2 style="margin: 0">Login</h2>
+          <button class="modal__close" type="button" data-close>Close</button>
+        </div>
+        <label class="field"><span>Email</span><input type="email" required /></label>
+        <label class="field"><span>Passphrase</span><input type="password" autocomplete="off" /></label>
+        <button class="tetra-btn tetra-btn--primary" type="submit">Login</button>
+        <p data-done hidden>This model does not sign you in.</p>
+      </form>
+    </dialog>
+
+    <script type="module" src="/src/previews.js"></script>
+  </body>
+</html>

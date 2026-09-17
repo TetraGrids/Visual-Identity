@@ -105,7 +105,14 @@
   width: 28px;
   height: 28px;
   color: var(--tetra-green);
+  text-decoration: none;
   filter: drop-shadow(var(--tetra-glow-green));
+}
+
+a.tetra-top__mark:hover,
+a.tetra-top__mark:focus-visible {
+  color: var(--tetra-ink);
+  outline: none;
 }
 
 .tetra-top__mark svg {
@@ -258,6 +265,7 @@
   position: relative;
   z-index: 1;
   background: var(--tetra-void);
+  padding-bottom: var(--tetra-footer-pad);
 }
 
 @media (max-width: 720px) {

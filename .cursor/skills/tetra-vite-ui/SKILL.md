@@ -51,7 +51,7 @@ Do not add a second header, hamburger, or floating circular menu.
 - Triad: green `#22c55e` primary, violet `#8b5cf6` + orange `#f97316` as glows.
 - High-contrast text. Jost. Uppercase nav.
 - Pattern fields stay behind content, never on the glass.
-- Buttons: `.tetra-btn`. Transform sheen BR→off TL at 80%. Instant outside drop-shadow. Reverse on leave.
+- Buttons: `.tetra-btn`. Transform sheen BR→off TL at 80%. Instant outside drop-shadow. Glow snaps off on leave.
 
 ## Checklist
 
@@ -59,6 +59,7 @@ Do not add a second header, hamburger, or floating circular menu.
 - [ ] tokens + chrome + buttons imported
 - [ ] Buttons use `.tetra-btn` (full-pass transform sheen, instant outside glow)
 - [ ] Bar smokes out; corner appears only when bar is gone
+- [ ] Top mark links to home; dock toggles footer
 - [ ] Dock triangle, sliding footer
 - [ ] No border-radius
 - [ ] No glass on content cards

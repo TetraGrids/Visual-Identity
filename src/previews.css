@@ -1,0 +1,25 @@
+.kit .banner {
+  margin: 0;
+  max-width: none;
+  padding: 72px 28px 0;
+}
+
+.kit .banner .note {
+  max-width: var(--tetra-max);
+  margin: 0 auto;
+}
+
+.kit .banner .note a {
+  color: var(--tetra-gold-line);
+}
+
+.kit .index {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 22px;
+}
+
+.kit .index a {
+  text-decoration: none;
+}

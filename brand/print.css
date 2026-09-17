@@ -18,6 +18,10 @@
     color: #111;
   }
 
+  .tetra-main {
+    padding-bottom: 0;
+  }
+
   :root {
     --tetra-void: #fff;
     --tetra-ink: #111;

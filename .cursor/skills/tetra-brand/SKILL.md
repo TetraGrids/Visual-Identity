@@ -37,7 +37,7 @@ If the surface is a website or app, follow `tetra-visual` and `tetra-vite-ui`. G
 
 ## Buttons
 
-Import `brand/buttons.css`. Use `.tetra-btn`. Hover: gold sheen via `transform` all the way off the far edge at 80%. Instant outside `drop-shadow`. Mouse out reverses sheen, glow snaps off. Gold is interaction only.
+Import `brand/buttons.css`. Use `.tetra-btn`. Hover: gold sheen via `transform` all the way off the far edge at 80%. Instant outside `drop-shadow`. Mouse out: the glow snaps off. Gold is interaction only.
 
 ## Builds
 

@@ -52,7 +52,7 @@ Top chrome is **two layers**, not a morph:
 Bottom-right: always-visible smaller glass triangle  
 `clip-path: polygon(100% 100%, 0 100%, 100% 0)` with a clear hypotenuse.
 
-Click it, or reach page bottom: sharp footer slides up from the bottom with links.
+Click it, or reach page bottom: sharp footer slides up from the bottom with links. Top bar mark links to home. Dock click toggles the footer.
 
 ## Patterns
 
@@ -71,7 +71,7 @@ Keep pattern opacity low on screens. Prints may go full density.
 Use class `tetra-btn` from `brand/buttons.css`. Radius stays 0. Gold is an interaction accent, not a triad fill.
 
 - Hover / focus: a **45° gold line** starts immediately and **travels all the way off** the top-left (transform of a static gradient). Opacity **80%**. **No park, no corner triangle.** Glow is **instant** (`drop-shadow`, no animation) and sits **outside** the button.
-- Mouse out: the line **reverses** (TL → off BR) and disappears. Glow snaps off.
+- Mouse out: the glow snaps off.
 
 Do not invent a second hover sheen. Do not round the control.
 
@@ -85,6 +85,8 @@ Do not invent a second hover sheen. Do not round the control.
 | `mark` | Logos, social, favicons | SVG from `brand/geometry/`. PNG masters in `Logos/`. |
 
 Default is **vite-ui**. Do not start a new Tetra surface in WordPress, Create React App, or a rounded component kit.
+
+Live models in this repo: `landing.html` (every marketing module, Tetra copy) and `previews.html` (every control those pages use). Copy those classes. Do not invent a second set.
 
 ## Do / don't
 

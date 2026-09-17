@@ -12,4 +12,4 @@ When designing or coding any Tetra surface, apply `tetra-visual` (global + `.cur
 - Default build is Vite. Import `brand/tokens.css` and `brand/chrome.css`.
 - One top chrome: bar smokes out (width + opacity); top-left triangle appears only when the bar is fully gone.
 - Bottom-right dock triangle opens the sliding footer. Glass only on chrome.
-- Buttons: gold sheen sweeps fully across and off; reverse on mouse out. Instant drop-shadow glow outside. Transform only, no parked corner.
+- Buttons: gold sheen sweeps fully across and off; no reverse on mouse out. Instant drop-shadow glow outside. Transform only, no parked corner.

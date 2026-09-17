@@ -10,22 +10,23 @@ import gridsLogo from "../Logos/Tetra-Grids-Logo-2.1.png"
 import fancyPrint from "../Backgrounds-and-Patterns/Fancy-Print-Tetra-Logo[SMALL][1920].png"
 
 mountTetraChrome({
-  home: "#top",
+  home: "/",
   blurb: "Tetrahedron G · Visual identity",
   nav: [
+    { href: "/#demos", label: "Demos" },
+    { href: "/landing.html", label: "Landing" },
+    { href: "/previews.html", label: "Previews" },
     { href: "#mark", label: "Mark" },
-    { href: "#color", label: "Triad" },
     { href: "#chrome", label: "Chrome" },
-    { href: "#builds", label: "Builds" },
     { href: "#controls", label: "Controls" },
   ],
   footer: [
+    { href: "/#demos", label: "Demos" },
+    { href: "/landing.html", label: "Landing UI" },
+    { href: "/previews.html", label: "Previews" },
     { href: "#mark", label: "Mark" },
-    { href: "#pattern", label: "Pattern" },
-    { href: "#builds", label: "Builds" },
     { href: "https://tetra.earth", label: "tetra.earth" },
     { href: "https://know.tetra.earth", label: "Know" },
-    { href: "#use", label: "Use" },
   ],
 })
 

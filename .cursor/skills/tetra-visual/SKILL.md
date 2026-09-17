@@ -41,6 +41,7 @@ Glass only on bar, late corner, dock, footer. Content is solid void. Vite only.
 - Bottom-right: always-visible smaller glass triangle  
   `clip-path: polygon(100% 100%, 0 100%, 100% 0)`.
 - Click it, or reach page bottom: sharp footer slides up with links.
+- Top bar mark is a link to `home`. Dock click always toggles the footer (user choice wins until you leave the bottom).
 
 Implement with `brand/chrome.css` + `brand/chrome.js`. Do not add a second nav. Do not morph bar into triangle.
 
@@ -48,7 +49,7 @@ Implement with `brand/chrome.css` + `brand/chrome.js`. Do not add a second nav. 
 
 Import `brand/buttons.css`. Class `tetra-btn`. Radius 0.
 
-Hover: a 45° gold sheen (`transform` of a static gradient) from off the bottom-right **all the way off** the top-left at 80%. No park, no corner triangle. Glow is instant `drop-shadow` outside the button. Mouse out reverses the sheen and snaps the glow off.
+Hover: a 45° gold sheen (`transform` of a static gradient) from off the bottom-right **all the way off** the top-left at 80%. No park, no corner triangle. Glow is instant `drop-shadow` outside the button. Mouse out: the glow snaps off.
 
 ## Builds
 

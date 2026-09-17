@@ -280,14 +280,66 @@ figcaption {
   margin: 32px 0 8px;
 }
 
+.demo-hub {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin-top: 40px;
+}
+
+.demo-hub__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  margin-top: 12px;
+  background: var(--tetra-glass-border);
+}
+
+.demo-hub__card {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 18px 16px;
+  color: var(--tetra-ink-dim) !important;
+  background: var(--tetra-void-lift);
+  text-decoration: none;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.demo-hub__card strong {
+  color: var(--tetra-ink);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.demo-hub__card:hover,
+.demo-hub__card:focus-visible {
+  color: var(--tetra-ink) !important;
+  outline: none;
+  box-shadow: inset 0 0 0 1px var(--tetra-green);
+}
+
+.demo-hub__card:hover strong,
+.demo-hub__card:focus-visible strong {
+  color: var(--tetra-green);
+}
+
 #use {
-  padding-bottom: 160px;
+  padding-bottom: 24px;
+}
+
+.guide a {
+  color: var(--tetra-green);
 }
 
 @media (max-width: 800px) {
   .pair,
   .swatches,
-  .plates-row {
+  .plates-row,
+  .demo-hub__grid {
     grid-template-columns: 1fr;
   }
 
