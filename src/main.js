@@ -14,6 +14,7 @@ mountTetraChrome({
   blurb: "Tetrahedron G · Visual identity",
   nav: [
     { href: "/#demos", label: "Demos" },
+    { href: "/grid.html", label: "Grid" },
     { href: "/landing.html", label: "Landing" },
     { href: "/previews.html", label: "Previews" },
     { href: "#mark", label: "Mark" },
@@ -24,6 +25,7 @@ mountTetraChrome({
     { href: "/#demos", label: "Demos" },
     { href: "/landing.html", label: "Landing UI" },
     { href: "/previews.html", label: "Previews" },
+    { href: "/grid.html", label: "The Grid" },
     { href: "#mark", label: "Mark" },
     { href: "https://tetra.earth", label: "tetra.earth" },
     { href: "https://know.tetra.earth", label: "Know" },

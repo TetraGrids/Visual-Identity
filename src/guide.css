@@ -285,11 +285,12 @@ figcaption {
   z-index: 1;
   max-width: 720px;
   margin-top: 40px;
+  padding-left: 8px;
 }
 
 .demo-hub__grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: 1fr 1fr;
   gap: 1px;
   margin-top: 12px;
   background: var(--tetra-glass-border);

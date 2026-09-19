@@ -12,6 +12,7 @@ mountTetraChrome({
   blurb: "Landing UI · demo",
   nav: [
     { href: "/#demos", label: "Demos" },
+    { href: "/grid.html", label: "Grid" },
     { href: "#outcomes", label: "Outcomes" },
     { href: "#voices", label: "Voices" },
     { href: "#pipeline", label: "Pipeline" },
@@ -21,6 +22,7 @@ mountTetraChrome({
     { href: "/#demos", label: "Demos" },
     { href: "/", label: "Guide" },
     { href: "/previews.html", label: "Previews" },
+    { href: "/grid.html", label: "The Grid" },
     { href: "#invite", label: "Request invite" },
     { href: "https://tetra.earth", label: "tetra.earth" },
     { href: "https://know.tetra.earth", label: "Know" },

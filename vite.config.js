@@ -12,6 +12,7 @@ export default defineConfig({
         guide: resolve(root, "index.html"),
         landing: resolve(root, "landing.html"),
         previews: resolve(root, "previews.html"),
+        grid: resolve(root, "grid.html"),
       },
     },
   },
