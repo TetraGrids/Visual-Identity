@@ -3,12 +3,14 @@
  *
  * Vertical lanes, horizontal rooms, optional nested subsection tracks.
  * One step per gesture. 38% to change unit; 62% to wrap after Mission Control.
- * Inner [data-scroll] panes consume the gesture until they hit an edge.
+ * Inner [data-scroll] panes own the wheel until they hit an edge, then the
+ * leftover continues into the next sub / room / lane with the same snap rules.
  */
 
 const SLOP = 12
-const WHEEL_IDLE = 96
+const WHEEL_IDLE = 280
 const SNAP_MS = 460
+const SCROLL_EPS = 2
 const EASE = "cubic-bezier(0.4, 0, 0.2, 1)"
 
 const AXIS = {
@@ -43,12 +45,27 @@ export function itemsOf(track) {
 }
 
 function canScroll(el, axis, dir) {
+  if (!el) return false
   const spec = AXIS[axis]
   const pos = spec.scrollPos(el)
   const max = spec.scrollMax(el)
-  if (max <= 1) return false
-  if (dir > 0) return pos < max - 1
-  return pos > 1
+  if (max <= SCROLL_EPS) return false
+  if (dir > 0) return pos < max - SCROLL_EPS
+  return pos > SCROLL_EPS
+}
+
+function consumeScroll(el, axis, raw) {
+  const spec = AXIS[axis]
+  const before = spec.scrollPos(el)
+  spec.applyScroll(el, raw)
+  return raw - (spec.scrollPos(el) - before)
+}
+
+function wheelRaw(event, axis) {
+  let raw = axis === "x" ? event.deltaX : event.deltaY
+  if (event.deltaMode === 1) raw *= 16
+  if (event.deltaMode === 2) raw *= axis === "x" ? window.innerWidth : window.innerHeight
+  return raw
 }
 
 function canSnap(track, dir, index) {
@@ -67,7 +84,7 @@ function isMap(target) {
   return Boolean(target.closest?.(".leaflet-container"))
 }
 
-export function createGridEngine(root, { threshold, wrapThreshold, onIndex, reduceMotion }) {
+export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold = 0.61, softThreshold = 0.42, onIndex, reduceMotion }) {
   const indices = new WeakMap()
   const bases = new WeakMap()
   let gesture = null
@@ -82,19 +99,30 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
     indices.set(track, index)
   }
 
-  const sizeOf = (track) => {
-    const axis = track.matches("[data-snap-y]") ? "y" : "x"
-    return AXIS[axis].size(track.parentElement || track)
+  const axisOf = (track) => (track.matches("[data-snap-y]") ? "y" : "x")
+
+  const viewSize = (track) => AXIS[axisOf(track)].size(track.parentElement || track)
+
+  const itemSpan = (track, item) => {
+    const y = axisOf(track) === "y"
+    const style = getComputedStyle(item)
+    const margin = y ? parseFloat(style.marginBottom) || 0 : parseFloat(style.marginRight) || 0
+    return (y ? item.offsetHeight : item.offsetWidth) + margin
   }
 
   const paint = (track, px, withTransition) => {
-    const axis = track.matches("[data-snap-y]") ? "y" : "x"
     track.style.transition = withTransition ? `transform ${duration()}ms ${EASE}` : "none"
-    track.style.transform = AXIS[axis].translate(px)
+    track.style.transform = AXIS[axisOf(track)].translate(px)
     bases.set(track, px)
   }
 
-  const restPx = (track, index = indexOf(track)) => -index * sizeOf(track)
+  const restPx = (track, index = indexOf(track)) => {
+    const items = itemsOf(track)
+    const limit = Math.max(0, Math.min(index, items.length))
+    let px = 0
+    for (let i = 0; i < limit; i += 1) px += itemSpan(track, items[i])
+    return -px
+  }
 
   const snapTo = (track, index, { silent } = {}) => {
     const items = itemsOf(track)
@@ -114,13 +142,76 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
     return next
   }
 
+  const childTrack = (track) => {
+    if (track.matches("[data-snap-y]")) {
+      const lane = itemsOf(track)[indexOf(track)]
+      return lane?.querySelector(":scope > [data-snap-x]") || null
+    }
+    if (track.matches("[data-snap-x]") && !track.hasAttribute("data-snap-sub")) {
+      const room = itemsOf(track)[indexOf(track)]
+      return room?.querySelector(":scope [data-snap-sub]") || null
+    }
+    return null
+  }
+
+  const hasChildren = (track) => {
+    const inner = childTrack(track)
+    return Boolean(inner && itemsOf(inner).length > 1)
+  }
+
+  const atLeaveEdge = (track, dir) => {
+    const inner = childTrack(track)
+    if (!inner) return true
+    const kids = itemsOf(inner)
+    if (kids.length <= 1) return true
+    const i = indexOf(inner)
+    if (dir > 0) return i === kids.length - 1
+    return i === 0
+  }
+
   const thresholdFor = (track, from, dir) => {
-    if (track.dataset.snapLoop == null) return threshold
-    const items = itemsOf(track)
-    const realFirst = 1
-    const realLast = items.length - 2
-    const wrapping = (from === realLast && dir > 0) || (from === realFirst && dir < 0)
-    return wrapping ? wrapThreshold : threshold
+    if (track.dataset.snapLoop != null) {
+      const items = itemsOf(track)
+      const realFirst = 1
+      const realLast = items.length - 2
+      const wrapping = (from === realLast && dir > 0) || (from === realFirst && dir < 0)
+      if (wrapping) return wrapThreshold
+    }
+    if (track.hasAttribute("data-snap-sub")) return threshold
+    if (hasChildren(track) && atLeaveEdge(track, dir)) return edgeThreshold
+    if (!hasChildren(track) && !track.hasAttribute("data-snap-sub")) return softThreshold
+    return threshold
+  }
+
+  const currentPage = () => {
+    const y = root.querySelector("[data-snap-loop]")
+    if (!y) return null
+    const lane = itemsOf(y)[indexOf(y)]
+    const x = lane?.querySelector(":scope > [data-snap-x]")
+    const room = x ? itemsOf(x)[indexOf(x)] : lane
+    const subTrack = room?.querySelector(":scope [data-snap-sub]")
+    return subTrack ? itemsOf(subTrack)[indexOf(subTrack)] : room
+  }
+
+  const currentPane = (from) => {
+    const unit = from?.closest?.(".grid-unit")
+    if (unit) return unit.querySelector("[data-scroll]")
+    return currentPage()?.querySelector("[data-scroll]") || null
+  }
+
+  const chainHandler = (dir) => {
+    const y = root.querySelector("[data-snap-loop]")
+    if (!y) return null
+    const lane = itemsOf(y)[indexOf(y)]
+    const x = lane?.querySelector(":scope > [data-snap-x]")
+    const room = x ? itemsOf(x)[indexOf(x)] : null
+    const sub = room?.querySelector(":scope [data-snap-sub]")
+    if (sub && canSnap(sub, dir, indexOf(sub))) return { type: "snap", node: sub, dir }
+    if (x && canSnap(x, dir, indexOf(x)) && atLeaveEdge(x, dir)) return { type: "snap", node: x, dir }
+    if (canSnap(y, dir, indexOf(y)) && atLeaveEdge(y, dir)) return { type: "snap", node: y, dir }
+    if (x && canSnap(x, dir, indexOf(x))) return { type: "snap", node: x, dir }
+    if (canSnap(y, dir, indexOf(y))) return { type: "snap", node: y, dir }
+    return null
   }
 
   const afterLoop = (track) => {
@@ -138,15 +229,15 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
   }
 
   const settle = (track, deltaPx) => {
-    const axis = track.matches("[data-snap-y]") ? "y" : "x"
-    const size = AXIS[axis].size(track.parentElement || track)
+    const size = viewSize(track)
     const from = indexOf(track)
     const dir = deltaPx > 0 ? 1 : deltaPx < 0 ? -1 : 0
     if (!dir || size <= 0) {
       snapTo(track, from)
       return
     }
-    const t = thresholdFor(track, from, dir)
+    const locked = hasChildren(track) && !atLeaveEdge(track, dir)
+    const t = locked ? 2 : thresholdFor(track, from, dir)
     const passed = Math.abs(deltaPx) / size >= t
     const target = passed && canSnap(track, dir, from) ? from + dir : from
     animating = true
@@ -157,29 +248,59 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
     }, duration() + 16)
   }
 
-  const findHandler = (start, axis, dir) => {
+  const findHandler = (start, axis, dir, { chain } = {}) => {
+    const pane = currentPane(start instanceof Element ? start : start?.parentElement)
+    if (pane && (axis === "y" || axis === "x") && canScroll(pane, axis, dir)) {
+      return { type: "scroll", node: pane, dir }
+    }
+    if (chain) return chainHandler(dir)
     let node = start instanceof Element ? start : start.parentElement
     while (node && node !== root.parentElement) {
       if (node.matches?.("[data-scroll]") && canScroll(node, axis, dir)) {
-        return { type: "scroll", node }
+        return { type: "scroll", node, dir }
       }
       if (node.matches?.(axis === "y" ? "[data-snap-y]" : "[data-snap-x]")) {
         const i = indexOf(node)
-        if (canSnap(node, dir, i)) return { type: "snap", node }
+        if (canSnap(node, dir, i)) return { type: "snap", node, dir }
       }
       node = node.parentElement
     }
     return null
   }
 
-  const fallbackHandler = (axis, dir) => {
+  const fallbackHandler = (axis, dir, { chain } = {}) => {
+    if (chain) return chainHandler(dir)
     const y = root.querySelector("[data-snap-loop]")
     if (!y) return null
-    if (axis === "y" && canSnap(y, dir, indexOf(y))) return { type: "snap", node: y }
+    if (axis === "y" && canSnap(y, dir, indexOf(y))) return { type: "snap", node: y, dir }
     const lane = itemsOf(y)[indexOf(y)]
     const x = lane?.querySelector(":scope > [data-snap-x]")
-    if (axis === "x" && x && canSnap(x, dir, indexOf(x))) return { type: "snap", node: x }
+    if (axis === "x" && x && canSnap(x, dir, indexOf(x))) return { type: "snap", node: x, dir }
     return null
+  }
+
+  const startSnapWheel = (handler, raw) => {
+    const track = handler.node
+    if (!gesture || gesture.mode !== "wheel" || gesture.handler?.node !== track) {
+      if (gesture?.mode === "wheel" && gesture.handler?.type === "snap") {
+        settle(gesture.handler.node, -gesture.delta)
+      }
+      gesture = { mode: "wheel", handler, delta: 0 }
+    }
+    gesture.delta += -raw
+    const leaveDir = gesture.delta < 0 ? 1 : -1
+    if (hasChildren(track) && !atLeaveEdge(track, leaveDir)) {
+      const max = viewSize(track) * 0.08
+      gesture.delta = Math.max(-max, Math.min(max, gesture.delta))
+    }
+    paint(track, restPx(track) + gesture.delta, false)
+    window.clearTimeout(wheelTimer)
+    wheelTimer = window.setTimeout(() => {
+      if (gesture?.mode === "wheel" && gesture.handler?.type === "snap") {
+        settle(gesture.handler.node, -gesture.delta)
+      }
+      gesture = null
+    }, WHEEL_IDLE)
   }
 
   const onPointerDown = (event) => {
@@ -212,7 +333,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
       }
       gesture.axis = Math.abs(dx) > Math.abs(dy) ? "x" : "y"
       const dir = gesture.axis === "x" ? (dx > 0 ? -1 : 1) : dy > 0 ? -1 : 1
-      gesture.handler = findHandler(event.target, gesture.axis, dir) || fallbackHandler(gesture.axis, dir)
+      gesture.handler = findHandler(event.target, gesture.axis, dir, { chain: true }) || fallbackHandler(gesture.axis, dir, { chain: true })
       if (!gesture.handler) {
         gesture = null
         return
@@ -229,11 +350,26 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
 
     if (gesture.handler.type === "scroll") {
       spec.applyScroll(gesture.handler.node, -step)
+      const dir = -step > 0 ? 1 : -1
+      if (!canScroll(gesture.handler.node, gesture.axis, dir)) {
+        const next =
+          findHandler(gesture.handler.node, gesture.axis, dir, { chain: true }) ||
+          fallbackHandler(gesture.axis, dir, { chain: true })
+        if (next?.type === "snap") {
+          gesture.handler = next
+          gesture.delta = 0
+        }
+      }
       return
     }
 
     const track = gesture.handler.node
     gesture.delta += step
+    const dir = gesture.delta < 0 ? 1 : -1
+    if (hasChildren(track) && !atLeaveEdge(track, dir)) {
+      const max = viewSize(track) * 0.08
+      gesture.delta = Math.max(-max, Math.min(max, gesture.delta))
+    }
     const from = restPx(track)
     paint(track, from + gesture.delta, false)
   }
@@ -247,6 +383,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
   }
 
   const onWheel = (event) => {
+    if (event.ctrlKey || event.metaKey) return
     if (animating) {
       event.preventDefault()
       return
@@ -254,33 +391,32 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
     const absX = Math.abs(event.deltaX)
     const absY = Math.abs(event.deltaY)
     const axis = absX > absY ? "x" : "y"
-    const raw = axis === "x" ? event.deltaX : event.deltaY
+    const raw = wheelRaw(event, axis)
     if (raw === 0) return
     const dir = raw > 0 ? 1 : -1
-    const handler = findHandler(event.target, axis, dir) || fallbackHandler(axis, dir)
+    const handler = findHandler(event.target, axis, dir, { chain: true }) || fallbackHandler(axis, dir, { chain: true })
 
     if (!handler) return
+
+    event.preventDefault()
+
     if (handler.type === "scroll") {
+      if (gesture?.mode === "wheel" && gesture.handler?.type === "snap") {
+        settle(gesture.handler.node, -gesture.delta)
+        gesture = null
+      }
+      const leftover = consumeScroll(handler.node, axis, raw)
+      if (Math.abs(leftover) <= SCROLL_EPS || canScroll(handler.node, axis, dir)) {
+        window.clearTimeout(wheelTimer)
+        return
+      }
+      const next = chainHandler(dir)
+      if (!next) return
+      startSnapWheel(next, leftover)
       return
     }
 
-    event.preventDefault()
-    const track = handler.node
-    if (!gesture || gesture.mode !== "wheel" || gesture.handler?.node !== track) {
-      if (gesture?.mode === "wheel" && gesture.handler?.type === "snap") {
-        settle(gesture.handler.node, -gesture.delta)
-      }
-      gesture = { mode: "wheel", axis, handler, delta: 0 }
-    }
-    gesture.delta += -raw
-    paint(track, restPx(track) + gesture.delta, false)
-    window.clearTimeout(wheelTimer)
-    wheelTimer = window.setTimeout(() => {
-      if (gesture?.mode === "wheel" && gesture.handler?.type === "snap") {
-        settle(gesture.handler.node, -gesture.delta)
-      }
-      gesture = null
-    }, WHEEL_IDLE)
+    startSnapWheel(handler, raw)
   }
 
   const onKey = (event) => {
@@ -297,6 +433,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
       event.preventDefault()
       const from = indexOf(track)
       if (!canSnap(track, dir, from)) return
+      if (hasChildren(track) && !atLeaveEdge(track, dir)) return
       animating = true
       snapTo(track, from + dir)
       window.setTimeout(() => {
@@ -305,8 +442,28 @@ export function createGridEngine(root, { threshold, wrapThreshold, onIndex, redu
       }, duration() + 16)
     }
 
-    if (event.key === "ArrowDown" || event.key === "PageDown") go(y, 1)
-    if (event.key === "ArrowUp" || event.key === "PageUp") go(y, -1)
+    if (event.key === "ArrowDown" || event.key === "PageDown") {
+      const pane = currentPane(event.target)
+      if (pane && canScroll(pane, "y", 1)) {
+        event.preventDefault()
+        pane.scrollTop += event.key === "PageDown" ? pane.clientHeight * 0.86 : 72
+        return
+      }
+      const next = chainHandler(1)
+      if (next?.type === "snap") go(next.node, 1)
+      return
+    }
+    if (event.key === "ArrowUp" || event.key === "PageUp") {
+      const pane = currentPane(event.target)
+      if (pane && canScroll(pane, "y", -1)) {
+        event.preventDefault()
+        pane.scrollTop -= event.key === "PageUp" ? pane.clientHeight * 0.86 : 72
+        return
+      }
+      const next = chainHandler(-1)
+      if (next?.type === "snap") go(next.node, -1)
+      return
+    }
     if (event.key === "ArrowRight") go(sub && canSnap(sub, 1, indexOf(sub)) ? sub : x, 1)
     if (event.key === "ArrowLeft") go(sub && canSnap(sub, -1, indexOf(sub)) ? sub : x, -1)
     if (event.key === "Home") {

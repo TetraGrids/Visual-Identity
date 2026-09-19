@@ -31,6 +31,15 @@ export const icons = {
     </g>`,
     "Crystal",
   ),
+  localize: svg(
+    `<g ${stroke}>
+      <rect x="4" y="4" width="10" height="10"/>
+      <rect x="18" y="4" width="10" height="10"/>
+      <rect x="4" y="18" width="10" height="10"/>
+      <rect x="18" y="18" width="10" height="10"/>
+    </g>`,
+    "Localize",
+  ),
   globe: svg(
     `<g ${stroke}>
       <circle cx="16" cy="16" r="11.2"/>

@@ -29,7 +29,9 @@ function renderLane(lane, { clone } = {}) {
   const bleed = lane.bleed ? " data-bleed" : ""
   const special = lane.special ? ` data-special="${lane.special}"` : ""
   const cloned = clone ? " data-clone" : ""
-  return `<section class="grid-lane" data-snap-item data-lane="${lane.id}"${bleed}${special}${cloned} aria-label="${lane.name}" ${clone ? "aria-hidden=\"true\" inert" : ""}>
+  const tone = lane.tone ? ` data-tone="${lane.tone}"` : ""
+  const chasm = (lane.rooms?.length || 0) > 1 ? "strong" : "soft"
+  return `<section class="grid-lane" data-snap-item data-lane="${lane.id}" data-chasm="${chasm}"${tone}${bleed}${special}${cloned} aria-label="${lane.name}" ${clone ? "aria-hidden=\"true\" inert" : ""}>
     <div class="grid-lane__x" data-snap-x>
       ${lane.rooms.map((room) => renderRoom(lane, room)).join("")}
     </div>
@@ -42,7 +44,7 @@ export function renderGrid(config) {
   const last = lanes[lanes.length - 1]
   const rail = lanes
     .map(
-      (lane) => `<button type="button" class="grid-rail__btn" data-go-lane="${lane.id}" aria-label="${lane.name}" title="${lane.name}">
+      (lane) => `<button type="button" class="grid-rail__btn" data-go-lane="${lane.id}" data-tone="${lane.tone || ""}" aria-label="${lane.name}" title="${lane.name}">
         ${icon(lane.icon)}
       </button>`,
     )

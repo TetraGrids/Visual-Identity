@@ -65,7 +65,15 @@ function wire(cell, { tiny }) {
   const parts = [
     `<rect x="${ix}" y="${iy}" width="${iw}" height="${head}" fill="none" stroke="currentColor" stroke-width="${s}" opacity="0.55"/>`,
   ]
-  if (kind === "scores") {
+  const scores = new Set(["scores", "claim", "season", "metrics", "stake", "wallet", "activation"])
+  const maps = new Set(["map", "locales"])
+  const passports = new Set(["passport", "verification"])
+  const plates = new Set(["badges", "accolades", "stamps", "barons", "stewards", "founding", "roles"])
+  const grids = new Set(["recurve", "recurve-room", "chiefs"])
+  const heroes = new Set(["mission", "level", "settings"])
+  const lists = new Set(["calendar", "training", "actions", "faq", "rules", "procedures", "hura", "venues", "projects", "reps", "algorithm"])
+
+  if (scores.has(kind)) {
     const stats = ih * 0.28
     const col = iw / 4
     for (let i = 0; i < 4; i += 1) {
@@ -80,17 +88,17 @@ function wire(cell, { tiny }) {
         `<line x1="${ix + 1}" y1="${fy + (fh / 4) * i}" x2="${ix + iw - 1}" y2="${fy + (fh / 4) * i}" stroke="currentColor" stroke-width="${s}" opacity="0.35"/>`,
       )
     }
-  } else if (kind === "map") {
+  } else if (maps.has(kind)) {
     parts.push(
       `<rect x="${ix}" y="${iy}" width="${iw}" height="${ih}" fill="none" stroke="currentColor" stroke-width="${s}" opacity="0.45"/>`,
     )
     parts.push(`<rect x="${ix + iw * 0.3}" y="${iy + ih * 0.4}" width="${tiny ? 1.4 : 3}" height="${tiny ? 1.4 : 3}" fill="currentColor" opacity="0.7"/>`)
     parts.push(`<rect x="${ix + iw * 0.62}" y="${iy + ih * 0.55}" width="${tiny ? 1.4 : 3}" height="${tiny ? 1.4 : 3}" fill="currentColor" opacity="0.7"/>`)
-  } else if (kind === "passport") {
+  } else if (passports.has(kind)) {
     parts.push(
       `<polygon points="${ix + iw * 0.5},${iy + head + 2} ${ix + iw * 0.72},${iy + ih - 2} ${ix + iw * 0.28},${iy + ih - 2}" fill="none" stroke="currentColor" stroke-width="${s}" opacity="0.5"/>`,
     )
-  } else if (kind === "badges" || kind === "accolades") {
+  } else if (plates.has(kind)) {
     const cols = 3
     const rows = 2
     const cw = iw / cols
@@ -102,7 +110,7 @@ function wire(cell, { tiny }) {
         )
       }
     }
-  } else if (kind === "recurve") {
+  } else if (grids.has(kind)) {
     const cw = iw / 2
     const rh = (ih - head - 1) / 2
     for (let r = 0; r < 2; r += 1) {
@@ -112,7 +120,7 @@ function wire(cell, { tiny }) {
         )
       }
     }
-  } else if (kind === "mission" || kind === "level") {
+  } else if (heroes.has(kind)) {
     parts.push(
       `<rect x="${ix}" y="${iy + head + 2}" width="${iw}" height="${ih * 0.32}" fill="none" stroke="currentColor" stroke-width="${s}" opacity="0.45"/>`,
     )
@@ -120,7 +128,7 @@ function wire(cell, { tiny }) {
       `<rect x="${ix}" y="${iy + ih * 0.62}" width="${iw * 0.4}" height="${ih * 0.22}" fill="none" stroke="currentColor" stroke-width="${s}" opacity="0.4"/>`,
     )
   } else {
-    const cols = kind === "calendar" || kind === "training" || kind === "actions" ? 1 : 2
+    const cols = lists.has(kind) ? 1 : 2
     const rows = cols === 1 ? 3 : 2
     const cw = iw / cols
     const rh = (ih - head - 1) / rows

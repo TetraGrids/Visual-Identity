@@ -42,7 +42,10 @@ export function mountGridMap(el) {
     })
   }
 
-  mapPlaces.forEach((place) => {
+  const filter = el.dataset.mapSet
+  const places = mapPlaces.filter((place) => !filter || place.set === filter)
+
+  places.forEach((place) => {
     const marker = L.marker([place.lat, place.lng], { icon: markIcon() }).addTo(map)
     marker.on("click", () => {
       map.setView([place.lat, place.lng], Math.max(map.getZoom(), 14), { animate: true })
@@ -51,7 +54,7 @@ export function mountGridMap(el) {
   })
 
   map.on("click", (event) => {
-    const hit = mapPlaces.find((place) => {
+    const hit = places.find((place) => {
       const here = L.latLng(place.lat, place.lng)
       return map.distance(here, event.latlng) < 180
     })

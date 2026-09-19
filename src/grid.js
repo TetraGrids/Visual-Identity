@@ -55,11 +55,11 @@ export function mountTetraGrid(mount, config = defaultGrid) {
     const subTrack = roomEl?.querySelector("[data-snap-sub]")
     const subEl = subTrack ? itemsOf(subTrack)[engine.indexOf(subTrack)] : null
     const sub = room?.subsections?.find((item) => item.id === subEl?.dataset.sub)
-    return { laneEl, lane, xTrack, roomEl, room, subTrack, sub }
+    return { laneEl, lane, xTrack, roomEl, room, subTrack, subEl, sub }
   }
 
   const paintChrome = () => {
-    const { laneEl, lane, room, sub, xTrack, roomEl } = position()
+    const { laneEl, lane, room, sub, xTrack, roomEl, subEl } = position()
     if (!lane) return
     way.textContent = [lane.name, room?.name, sub?.name].filter(Boolean).join(" · ")
     root.querySelectorAll(".grid-rail__btn").forEach((btn) => {
@@ -73,9 +73,11 @@ export function mountTetraGrid(mount, config = defaultGrid) {
       )
       .join("")
     root.classList.toggle("is-bleed", Boolean(laneEl?.hasAttribute("data-bleed")))
+    if (lane.tone) root.dataset.tone = lane.tone
+    else delete root.dataset.tone
     writeHash({ lane: lane.id, room: room?.id, sub: sub?.id })
-    if (lane.id === "map") {
-      const mapEl = laneEl.querySelector("[data-grid-map]")
+    if (room?.kind === "map") {
+      const mapEl = (subEl || roomEl)?.querySelector("[data-grid-map]")
       mountGridMap(mapEl)
     }
     roomEl?.querySelectorAll(".leaflet-container").forEach(() => {})
@@ -85,6 +87,8 @@ export function mountTetraGrid(mount, config = defaultGrid) {
   const engine = createGridEngine(root, {
     threshold: config.snap.threshold,
     wrapThreshold: config.snap.wrapThreshold,
+    edgeThreshold: config.snap.edgeThreshold,
+    softThreshold: config.snap.softThreshold,
     reduceMotion,
     onIndex: () => paintChrome(),
   })
