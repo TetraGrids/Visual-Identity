@@ -1,10 +1,11 @@
 /**
  * Nested snap engine for The Grid.
  *
- * Vertical lanes, horizontal rooms, optional nested subsection tracks.
- * One step per gesture. 38% to change unit; 62% to wrap after Mission Control.
- * Inner [data-scroll] panes own the wheel until they hit an edge, then the
- * leftover continues into the next sub / room / lane with the same snap rules.
+ * Horizontal rooms (top-level divisions). Vertical subsections, then lanes.
+ * Right/left land on the first heading of the next room. Down/up walk a room,
+ * then the next row across the 61vh gap. 38% to change unit; 62% to wrap.
+ * Inner [data-scroll] panes own the wheel until they hit an edge, then leftover
+ * continues with the same snap rules.
  */
 
 const SLOP = 12
@@ -126,48 +127,82 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
 
   const snapTo = (track, index, { silent } = {}) => {
     const items = itemsOf(track)
+    const from = indexOf(track)
     const next = Math.max(0, Math.min(items.length - 1, index))
     setIndex(track, next)
     paint(track, restPx(track, next), !reduceMotion)
+    alignAfter(track, from, next, items)
+    if (from !== next) {
+      items[next]?.querySelectorAll("[data-scroll]").forEach((el) => {
+        el.scrollTop = 0
+        el.scrollLeft = 0
+      })
+    }
     if (!silent) onIndex?.(track, next, items[next])
     return next
   }
 
   const jumpTo = (track, index) => {
     const items = itemsOf(track)
+    const from = indexOf(track)
     const next = Math.max(0, Math.min(items.length - 1, index))
     setIndex(track, next)
     paint(track, restPx(track, next), false)
+    alignAfter(track, from, next, items)
+    if (from !== next) {
+      items[next]?.querySelectorAll("[data-scroll]").forEach((el) => {
+        el.scrollTop = 0
+        el.scrollLeft = 0
+      })
+    }
     onIndex?.(track, next, items[next])
     return next
   }
 
-  const childTrack = (track) => {
-    if (track.matches("[data-snap-y]")) {
-      const lane = itemsOf(track)[indexOf(track)]
-      return lane?.querySelector(":scope > [data-snap-x]") || null
-    }
-    if (track.matches("[data-snap-x]") && !track.hasAttribute("data-snap-sub")) {
-      const room = itemsOf(track)[indexOf(track)]
-      return room?.querySelector(":scope [data-snap-sub]") || null
-    }
-    return null
+  const roomTrackOf = (lane) => lane?.querySelector(":scope > [data-snap-x]") || null
+
+  const subTrackOf = (room) => room?.querySelector(":scope [data-snap-sub]") || null
+
+  const headingOf = (room) => {
+    const sub = subTrackOf(room)
+    if (sub && indexOf(sub) !== 0) jumpTo(sub, 0)
   }
 
-  const hasChildren = (track) => {
-    const inner = childTrack(track)
-    return Boolean(inner && itemsOf(inner).length > 1)
+  const copyColumn = (fromLane, toLane) => {
+    const fromX = roomTrackOf(fromLane)
+    const toX = roomTrackOf(toLane)
+    if (!toX) return
+    const col = fromX ? Math.min(indexOf(fromX), itemsOf(toX).length - 1) : 0
+    if (indexOf(toX) !== col) jumpTo(toX, col)
+    headingOf(itemsOf(toX)[indexOf(toX)])
+  }
+
+  const alignAfter = (track, from, next, items) => {
+    if (from === next) return
+    if (track.dataset.snapLoop != null) {
+      copyColumn(items[from], items[next])
+      return
+    }
+    if (track.matches("[data-snap-x]") && !track.hasAttribute("data-snap-sub")) {
+      headingOf(items[next])
+    }
   }
 
   const atLeaveEdge = (track, dir) => {
-    const inner = childTrack(track)
-    if (!inner) return true
-    const kids = itemsOf(inner)
+    if (track.dataset.snapLoop == null) return true
+    const lane = itemsOf(track)[indexOf(track)]
+    const x = roomTrackOf(lane)
+    const room = x ? itemsOf(x)[indexOf(x)] : null
+    const sub = subTrackOf(room)
+    if (!sub) return true
+    const kids = itemsOf(sub)
     if (kids.length <= 1) return true
-    const i = indexOf(inner)
+    const i = indexOf(sub)
     if (dir > 0) return i === kids.length - 1
     return i === 0
   }
+
+  const laneLocked = (track, dir) => track.dataset.snapLoop != null && !atLeaveEdge(track, dir)
 
   const thresholdFor = (track, from, dir) => {
     if (track.dataset.snapLoop != null) {
@@ -178,8 +213,8 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
       if (wrapping) return wrapThreshold
     }
     if (track.hasAttribute("data-snap-sub")) return threshold
-    if (hasChildren(track) && atLeaveEdge(track, dir)) return edgeThreshold
-    if (!hasChildren(track) && !track.hasAttribute("data-snap-sub")) return softThreshold
+    if (track.dataset.snapLoop != null && atLeaveEdge(track, dir)) return edgeThreshold
+    if (track.matches("[data-snap-x]")) return threshold
     return threshold
   }
 
@@ -199,17 +234,18 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
     return currentPage()?.querySelector("[data-scroll]") || null
   }
 
-  const chainHandler = (dir) => {
+  const chainHandler = (dir, axis = "y") => {
     const y = root.querySelector("[data-snap-loop]")
     if (!y) return null
     const lane = itemsOf(y)[indexOf(y)]
-    const x = lane?.querySelector(":scope > [data-snap-x]")
+    const x = roomTrackOf(lane)
     const room = x ? itemsOf(x)[indexOf(x)] : null
-    const sub = room?.querySelector(":scope [data-snap-sub]")
+    const sub = subTrackOf(room)
+    if (axis === "x") {
+      if (x && canSnap(x, dir, indexOf(x))) return { type: "snap", node: x, dir }
+      return null
+    }
     if (sub && canSnap(sub, dir, indexOf(sub))) return { type: "snap", node: sub, dir }
-    if (x && canSnap(x, dir, indexOf(x)) && atLeaveEdge(x, dir)) return { type: "snap", node: x, dir }
-    if (canSnap(y, dir, indexOf(y)) && atLeaveEdge(y, dir)) return { type: "snap", node: y, dir }
-    if (x && canSnap(x, dir, indexOf(x))) return { type: "snap", node: x, dir }
     if (canSnap(y, dir, indexOf(y))) return { type: "snap", node: y, dir }
     return null
   }
@@ -236,7 +272,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
       snapTo(track, from)
       return
     }
-    const locked = hasChildren(track) && !atLeaveEdge(track, dir)
+    const locked = laneLocked(track, dir)
     const t = locked ? 2 : thresholdFor(track, from, dir)
     const passed = Math.abs(deltaPx) / size >= t
     const target = passed && canSnap(track, dir, from) ? from + dir : from
@@ -253,7 +289,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
     if (pane && (axis === "y" || axis === "x") && canScroll(pane, axis, dir)) {
       return { type: "scroll", node: pane, dir }
     }
-    if (chain) return chainHandler(dir)
+    if (chain) return chainHandler(dir, axis)
     let node = start instanceof Element ? start : start.parentElement
     while (node && node !== root.parentElement) {
       if (node.matches?.("[data-scroll]") && canScroll(node, axis, dir)) {
@@ -269,7 +305,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
   }
 
   const fallbackHandler = (axis, dir, { chain } = {}) => {
-    if (chain) return chainHandler(dir)
+    if (chain) return chainHandler(dir, axis)
     const y = root.querySelector("[data-snap-loop]")
     if (!y) return null
     if (axis === "y" && canSnap(y, dir, indexOf(y))) return { type: "snap", node: y, dir }
@@ -289,7 +325,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
     }
     gesture.delta += -raw
     const leaveDir = gesture.delta < 0 ? 1 : -1
-    if (hasChildren(track) && !atLeaveEdge(track, leaveDir)) {
+    if (laneLocked(track, leaveDir)) {
       const max = viewSize(track) * 0.08
       gesture.delta = Math.max(-max, Math.min(max, gesture.delta))
     }
@@ -366,7 +402,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
     const track = gesture.handler.node
     gesture.delta += step
     const dir = gesture.delta < 0 ? 1 : -1
-    if (hasChildren(track) && !atLeaveEdge(track, dir)) {
+    if (laneLocked(track, dir)) {
       const max = viewSize(track) * 0.08
       gesture.delta = Math.max(-max, Math.min(max, gesture.delta))
     }
@@ -410,7 +446,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
         window.clearTimeout(wheelTimer)
         return
       }
-      const next = chainHandler(dir)
+      const next = chainHandler(dir, axis)
       if (!next) return
       startSnapWheel(next, leftover)
       return
@@ -424,16 +460,14 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
     const y = root.querySelector("[data-snap-loop]")
     if (!y) return
     const lane = itemsOf(y)[indexOf(y)]
-    const x = lane?.querySelector(":scope [data-snap-x]")
-    const room = x ? itemsOf(x)[indexOf(x)] : null
-    const sub = room?.querySelector(":scope [data-snap-x][data-snap-sub]")
+    const x = roomTrackOf(lane)
 
     const go = (track, dir) => {
       if (!track) return
       event.preventDefault()
       const from = indexOf(track)
       if (!canSnap(track, dir, from)) return
-      if (hasChildren(track) && !atLeaveEdge(track, dir)) return
+      if (laneLocked(track, dir)) return
       animating = true
       snapTo(track, from + dir)
       window.setTimeout(() => {
@@ -449,7 +483,7 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
         pane.scrollTop += event.key === "PageDown" ? pane.clientHeight * 0.86 : 72
         return
       }
-      const next = chainHandler(1)
+      const next = chainHandler(1, "y")
       if (next?.type === "snap") go(next.node, 1)
       return
     }
@@ -460,12 +494,12 @@ export function createGridEngine(root, { threshold, wrapThreshold, edgeThreshold
         pane.scrollTop -= event.key === "PageUp" ? pane.clientHeight * 0.86 : 72
         return
       }
-      const next = chainHandler(-1)
+      const next = chainHandler(-1, "y")
       if (next?.type === "snap") go(next.node, -1)
       return
     }
-    if (event.key === "ArrowRight") go(sub && canSnap(sub, 1, indexOf(sub)) ? sub : x, 1)
-    if (event.key === "ArrowLeft") go(sub && canSnap(sub, -1, indexOf(sub)) ? sub : x, -1)
+    if (event.key === "ArrowRight") go(x, 1)
+    if (event.key === "ArrowLeft") go(x, -1)
     if (event.key === "Home") {
       event.preventDefault()
       jumpTo(y, y.dataset.snapLoop != null ? 1 : 0)

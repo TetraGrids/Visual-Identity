@@ -9,7 +9,7 @@ function renderRoom(lane, room) {
   const subs = room.subsections
   if (subs?.length) {
     return `<article class="grid-room" data-snap-item data-room="${room.id}" data-kind="${room.kind}">
-      <div class="grid-sub" data-snap-x data-snap-sub>
+      <div class="grid-sub" data-snap-y data-snap-sub>
         ${subs
           .map(
             (sub) => `<div class="grid-sub__page" data-snap-item data-sub="${sub.id}">
@@ -60,12 +60,14 @@ export function renderGrid(config) {
         <a class="tetra-btn tetra-btn--primary" href="${notes.backHref}">${notes.backLabel}</a>
         <a class="tetra-btn tetra-btn--ghost" href="/">Brand guide</a>
       </aside>
-      <nav class="grid-rail" aria-label="Lanes">
+      <div class="grid-nav">
         <button type="button" class="grid-overview-btn" data-overview-open data-grid-ignore aria-label="Overview" aria-expanded="false" title="Overview">
           <span class="grid-overview-btn__mark" data-overview-mini></span>
         </button>
-        ${rail}
-      </nav>
+        <nav class="grid-rail" aria-label="Lanes">
+          ${rail}
+        </nav>
+      </div>
       <p class="grid-way" data-way></p>
       <div class="grid-dots" data-dots></div>
       <div class="grid-overview" data-overview data-grid-ignore hidden>

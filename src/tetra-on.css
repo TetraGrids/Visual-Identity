@@ -1,0 +1,741 @@
+/* Tetra On — courtyard onboarding. Phone column on a temple field. Radius 0. */
+
+html,
+body.on-body,
+#on {
+  height: 100%;
+  margin: 0;
+  overflow: hidden;
+  background: var(--tetra-void);
+  color: var(--tetra-ink);
+}
+
+.on-world {
+  position: relative;
+  isolation: isolate;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  font-family: var(--tetra-font);
+  background-color: var(--tetra-void);
+  background-image: var(--on-field);
+  background-size: cover;
+  background-position: center;
+}
+
+.on-world::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, rgba(5, 7, 5, 0.82), rgba(5, 7, 5, 0.42) 46%, rgba(5, 7, 5, 0.55)),
+    url("../brand/geometry/pattern-field.svg");
+  background-size: auto, 104px 90px;
+  opacity: 0.88;
+  pointer-events: none;
+}
+
+.skip {
+  position: absolute;
+  left: 12px;
+  top: 12px;
+  z-index: 90;
+  padding: 10px 14px;
+  color: var(--tetra-void);
+  background: var(--tetra-green);
+  text-decoration: none;
+  font-size: 12px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  transform: translateY(-160%);
+}
+
+.skip:focus {
+  transform: none;
+}
+
+.on-notes-btn {
+  position: absolute;
+  z-index: 12;
+  top: 14px;
+  right: 14px;
+  padding: 8px 12px;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  color: var(--tetra-gold-line);
+  background: var(--tetra-void);
+  border: 1px solid var(--tetra-gold);
+  cursor: pointer;
+}
+
+.on-notes-btn:hover,
+.on-notes-btn:focus-visible {
+  filter: drop-shadow(0 0 8px rgba(255, 229, 102, 0.45));
+  outline: none;
+}
+
+.on-notes {
+  position: absolute;
+  z-index: 11;
+  top: 52px;
+  right: 14px;
+  width: min(360px, calc(100vw - 28px));
+  padding: 16px;
+  background: var(--tetra-void);
+  border: 1px solid var(--tetra-gold);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.on-notes[hidden] {
+  display: none;
+}
+
+.on-notes p {
+  margin: 0;
+  color: var(--tetra-ink-dim);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.on-notes .on-eyebrow {
+  color: var(--tetra-green);
+  font-size: 12px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.on-notes .tetra-btn {
+  align-self: flex-start;
+}
+
+.on-phone {
+  position: relative;
+  z-index: 1;
+  width: min(390px, 100%);
+  height: min(844px, calc(100dvh - 32px));
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  touch-action: pan-y;
+  background: var(--tetra-void);
+  box-shadow:
+    inset 0 0 0 1px var(--tetra-glass-border),
+    0 0 0 1px rgba(5, 7, 5, 0.8),
+    0 24px 80px rgba(5, 7, 5, 0.65),
+    var(--tetra-glow-triad);
+}
+
+.on-phone:focus-visible {
+  outline: 1px solid var(--tetra-green);
+  outline-offset: 3px;
+}
+
+.on-progress {
+  flex: 0 0 3px;
+  display: flex;
+  gap: 2px;
+  background: var(--tetra-void);
+}
+
+.on-progress span {
+  flex: 1;
+  background: var(--tetra-void-panel);
+}
+
+.on-progress span.is-on {
+  background: var(--tetra-green);
+  box-shadow: var(--tetra-glow-green);
+}
+
+.on-progress span.is-done {
+  background: color-mix(in srgb, var(--tetra-green) 45%, var(--tetra-void-panel));
+}
+
+.on-screen {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 18px 18px 20px;
+  overflow: auto;
+}
+
+.on-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  min-height: 28px;
+  margin-bottom: 12px;
+}
+
+.on-back {
+  padding: 0;
+  font: inherit;
+  font-size: 11px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  color: var(--tetra-ink-mute);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.on-arrow {
+  flex: 0 0 44px;
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  color: var(--tetra-ink);
+  background: var(--tetra-void-lift);
+  border: 1px solid var(--tetra-glass-border);
+  cursor: pointer;
+}
+
+.on-arrow svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.on-arrow:hover,
+.on-arrow:focus-visible {
+  color: var(--tetra-green);
+  border-color: var(--tetra-green);
+  outline: none;
+}
+
+.on-arrow:disabled {
+  color: var(--tetra-ink-mute);
+  opacity: 0.28;
+  cursor: default;
+  pointer-events: none;
+}
+
+.on-back:hover,
+.on-back:focus-visible {
+  color: var(--tetra-green);
+  outline: none;
+}
+
+.on-back[hidden] {
+  visibility: hidden;
+}
+
+.on-kicker,
+.on-eyebrow {
+  margin: 0;
+  color: var(--tetra-green);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.on-screen h1 {
+  margin: 0 0 10px;
+  font-size: clamp(28px, 8vw, 40px);
+  font-weight: 500;
+  line-height: 0.95;
+  letter-spacing: var(--tetra-tracking-display);
+  text-transform: uppercase;
+}
+
+.on-lede {
+  margin: 0 0 14px;
+  color: var(--tetra-ink-dim);
+  font-size: 13px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.on-body,
+.on-belief,
+.on-movie,
+.on-fine {
+  margin: 0 0 12px;
+  color: var(--tetra-ink-dim);
+  font-size: 15px;
+  line-height: 1.45;
+}
+
+.on-belief {
+  color: var(--tetra-ink);
+}
+
+.on-echo {
+  margin: 0 0 10px;
+  color: var(--tetra-green);
+  font-size: 13px;
+}
+
+.on-solid {
+  display: block;
+  width: 88px;
+  height: 88px;
+  margin: 4px 0 16px;
+  color: var(--tetra-green);
+  filter:
+    drop-shadow(0 0 12px rgba(34, 197, 94, 0.45))
+    drop-shadow(0 0 28px rgba(139, 92, 246, 0.22));
+}
+
+.on-solid--lg {
+  width: min(180px, 46vw);
+  height: auto;
+  margin: 8px auto 18px;
+}
+
+.on-mark {
+  width: 52px;
+  margin: 0 0 10px;
+  color: var(--tetra-green);
+  filter:
+    drop-shadow(0 0 12px rgba(34, 197, 94, 0.5))
+    drop-shadow(0 0 28px rgba(139, 92, 246, 0.25));
+}
+
+.on-mark svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.on-mark--g {
+  width: 72px;
+}
+
+.on-wordmark {
+  width: min(168px, 58%);
+  margin: 0 0 14px;
+  color: var(--tetra-ink);
+}
+
+.on-wordmark svg {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.on-choices {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 8px 0 18px;
+}
+
+.on-choice {
+  min-height: 64px;
+  padding: 12px 10px;
+  font: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  color: var(--tetra-ink);
+  background: var(--tetra-void-lift);
+  border: 1px solid var(--tetra-glass-border);
+  cursor: pointer;
+}
+
+.on-choice:hover,
+.on-choice:focus-visible {
+  border-color: var(--tetra-green);
+  outline: none;
+}
+
+.on-choice.is-on {
+  color: var(--tetra-void);
+  background: var(--tetra-green);
+  border-color: var(--tetra-green);
+}
+
+.on-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+}
+
+.on-foot .tetra-btn {
+  width: 100%;
+}
+
+.on-quiet {
+  display: inline-block;
+  align-self: center;
+  padding: 0;
+  font: inherit;
+  font-size: 12px;
+  color: var(--tetra-ink-mute);
+  background: none;
+  border: 0;
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  cursor: pointer;
+}
+
+.on-quiet:hover,
+.on-quiet:focus-visible {
+  color: var(--tetra-green);
+  outline: none;
+}
+
+.on-splash {
+  position: relative;
+  padding: 0;
+  overflow: auto;
+}
+
+.on-mark {
+  width: 36px;
+  height: 36px;
+  margin: 0 0 12px;
+  color: var(--tetra-green);
+  filter:
+    drop-shadow(0 0 12px rgba(34, 197, 94, 0.5))
+    drop-shadow(0 0 28px rgba(139, 92, 246, 0.22));
+}
+
+.on-mark svg {
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+.on-splash__hero {
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(to top, var(--tetra-void) 18%, rgba(5, 7, 5, 0.2) 48%, rgba(5, 7, 5, 0.35) 100%),
+    var(--on-plato);
+  background-size: cover;
+  background-position: center 18%;
+}
+
+.on-splash .on-top,
+.on-splash .on-kicker,
+.on-splash .on-arrow,
+.on-splash .on-mark,
+.on-splash .on-wordmark,
+.on-splash h1,
+.on-splash .on-lede,
+.on-splash .on-body,
+.on-splash .on-foot {
+  position: relative;
+  z-index: 1;
+}
+
+.on-splash .on-copy {
+  position: relative;
+  z-index: 1;
+  margin-top: auto;
+  padding: 18px 18px 8px;
+}
+
+.on-splash .on-foot {
+  padding: 8px 18px 20px;
+}
+
+.on-list {
+  margin: 0 0 16px;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.on-list li {
+  padding: 12px 12px 12px 14px;
+  color: var(--tetra-ink-dim);
+  font-size: 14px;
+  line-height: 1.4;
+  background: var(--tetra-void-lift);
+  box-shadow: inset 3px 0 0 var(--tetra-green);
+}
+
+.on-plan-line {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  color: var(--tetra-ink-mute);
+  font-size: 13px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--tetra-glass-border);
+}
+
+.on-plan-line.is-on {
+  color: var(--tetra-ink);
+}
+
+.on-plan-line .on-solid {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+  filter: none;
+  opacity: 0.35;
+}
+
+.on-plan-line.is-on .on-solid {
+  opacity: 1;
+  filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.45));
+}
+
+.on-stars {
+  display: flex;
+  gap: 8px;
+  margin: 12px 0 18px;
+}
+
+.on-star {
+  flex: 1;
+  height: 52px;
+  color: var(--tetra-ink-mute);
+  background: var(--tetra-void-lift);
+  border: 1px solid var(--tetra-glass-border);
+  cursor: pointer;
+}
+
+.on-star svg {
+  width: 22px;
+  height: 22px;
+}
+
+.on-star.is-on {
+  color: var(--tetra-green);
+  border-color: var(--tetra-green);
+}
+
+.on-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  margin: 8px 0 16px;
+}
+
+.on-time {
+  display: grid;
+  grid-template-columns: 88px 1fr;
+  gap: 12px;
+  padding: 14px 0;
+  border-bottom: 1px solid var(--tetra-glass-border);
+}
+
+.on-time strong {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  color: var(--tetra-green);
+}
+
+.on-time span {
+  color: var(--tetra-ink-dim);
+  font-size: 14px;
+}
+
+.on-plans {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 8px 0 12px;
+}
+
+.on-plan {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 14px;
+  font: inherit;
+  color: inherit;
+  background: var(--tetra-void-lift);
+  border: 1px solid var(--tetra-glass-border);
+  cursor: pointer;
+}
+
+.on-plan.is-on {
+  border-color: var(--tetra-green);
+  box-shadow: inset 0 0 0 1px var(--tetra-green);
+}
+
+.on-plan__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.on-plan__name {
+  font-size: 13px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.on-plan__price {
+  color: var(--tetra-green);
+  font-size: 15px;
+}
+
+.on-plan__badge {
+  margin: 6px 0 0;
+  color: var(--tetra-gold-line);
+  font-size: 11px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.on-plan__fine {
+  margin: 8px 0 0;
+  color: var(--tetra-ink-mute);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.on-friend {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  color: var(--tetra-ink);
+  background: var(--tetra-void-panel);
+  border-left: 3px solid var(--tetra-green);
+  font-size: 13px;
+}
+
+.on-legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  font-size: 11px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+}
+
+.on-legal a,
+.on-legal button {
+  color: var(--tetra-ink-mute);
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: inherit;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.on-legal a:hover,
+.on-legal button:hover {
+  color: var(--tetra-green);
+}
+
+.on-code {
+  margin: 8px 0 12px;
+  padding: 16px 12px;
+  text-align: center;
+  font-size: 22px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--tetra-ink);
+  background: var(--tetra-void-lift);
+  box-shadow: inset 0 0 0 1px var(--tetra-green);
+}
+
+.on-gates {
+  margin: 0 0 12px;
+  padding-left: 18px;
+  color: var(--tetra-ink-dim);
+  font-size: 14px;
+}
+
+.on-deeper-title {
+  margin: 18px 0 8px;
+  font-size: 12px;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  color: var(--tetra-green);
+}
+
+.on-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 12px;
+}
+
+.on-links a {
+  display: block;
+  padding: 12px;
+  color: var(--tetra-ink);
+  text-decoration: none;
+  background: var(--tetra-void-lift);
+  box-shadow: inset 0 0 0 1px var(--tetra-glass-border);
+}
+
+.on-links a:hover,
+.on-links a:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--tetra-green);
+}
+
+.on-links small {
+  display: block;
+  margin-top: 4px;
+  color: var(--tetra-ink-mute);
+  font-size: 12px;
+}
+
+.on-toast {
+  position: absolute;
+  z-index: 20;
+  left: 18px;
+  right: 18px;
+  bottom: 18px;
+  padding: 12px 14px;
+  background: var(--tetra-void-panel);
+  border: 1px solid var(--tetra-gold);
+  color: var(--tetra-ink);
+  font-size: 13px;
+}
+
+.on-toast[hidden] {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .on-world {
+    background-image: none;
+  }
+
+  .on-world::before {
+    background-image: url("../brand/geometry/pattern-field.svg");
+    background-size: 104px 90px;
+    opacity: 0.35;
+  }
+
+  .on-phone {
+    width: 100%;
+    height: 100dvh;
+    box-shadow: none;
+  }
+
+  .on-notes-btn {
+    top: 8px;
+    right: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .on-solid,
+  .on-plan-line .on-solid {
+    filter: none;
+  }
+}

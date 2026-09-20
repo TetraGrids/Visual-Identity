@@ -128,6 +128,11 @@ export function mountTetraGrid(mount, config = defaultGrid) {
   applyRoute(parseHash())
   root.focus({ preventScroll: true })
 
+  const railFold = window.matchMedia("(max-width: 720px)")
+  const syncRailFold = () => root.classList.toggle("is-rail-collapsed", railFold.matches)
+  railFold.addEventListener("change", syncRailFold)
+  syncRailFold()
+
   const goTo = ({ lane, room, sub }) => {
     applyRoute({ lane, room, sub: sub || undefined })
   }

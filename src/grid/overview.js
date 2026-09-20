@@ -53,6 +53,18 @@ function here(cell, current) {
   return cell.subId === sub
 }
 
+const TONES = {
+  yellow: "#eab308",
+  blue: "#3b82f6",
+  purple: "#8b5cf6",
+  "blue-deep": "#1d4ed8",
+  "blue-light": "#7dd3fc",
+  pink: "#ec4899",
+  "green-deep": "#15803d",
+  green: "#22c55e",
+  red: "#dc2626",
+}
+
 function wire(cell, { tiny }) {
   const { x, y, w, h, kind } = cell
   const s = tiny ? 0.45 : 0.7
@@ -147,7 +159,7 @@ function paint(config, current, { mode }) {
   const tiny = mode === "mini"
   const spec = tiny
     ? { cellW: 7.2, cellH: 6.2, gap: 1.1, roomGap: 1.8, laneGap: 1.6, labelW: 0, pad: 2 }
-    : { cellW: 70, cellH: 54, gap: 5, roomGap: 22, laneGap: 26, labelW: 118, pad: 28 }
+    : { cellW: 70, cellH: 54, gap: 5, roomGap: 22, laneGap: 26, labelW: 132, pad: 28 }
   const model = layout(config, spec)
   const vb = `0 0 ${model.width} ${model.height}`
   const first = model.rows[0]
@@ -158,23 +170,25 @@ function paint(config, current, { mode }) {
 
   const body = model.rows
     .map((row) => {
+      const tone = TONES[row.lane.tone] || "#22c55e"
       const label = tiny
         ? ""
-        : `<text x="${spec.pad + 14}" y="${row.y + spec.cellH / 2 + 4}" fill="currentColor" font-size="11" letter-spacing="0.12em">${esc(row.lane.name.toUpperCase())}</text>`
+        : `<rect class="grid-ov-swatch" x="${spec.pad}" y="${row.y + spec.cellH / 2 - 6}" width="12" height="12" fill="${tone}"/>
+           <text x="${spec.pad + 18}" y="${row.y + spec.cellH / 2 + 4}" fill="${tone}" font-size="11" letter-spacing="0.12em">${esc(row.lane.name.toUpperCase())}</text>`
       const rooms = row.rooms
         .map((cluster) => {
           const caption = tiny
             ? ""
-            : `<text x="${cluster.x}" y="${cluster.y - 7}" fill="currentColor" font-size="8" letter-spacing="0.12em" opacity="0.72">${esc(cluster.room.name.toUpperCase())}</text>`
+            : `<text x="${cluster.x}" y="${cluster.y - 7}" fill="${tone}" font-size="8" letter-spacing="0.12em" opacity="0.8">${esc(cluster.room.name.toUpperCase())}</text>`
           const cells = cluster.cells
             .map((cell) => {
               const on = here(cell, current)
               const subLabel =
                 tiny || cell.subId === ""
                   ? ""
-                  : `<text x="${cell.x + 3}" y="${cell.y + cell.h - 5}" fill="currentColor" font-size="8" letter-spacing="0.08em" opacity="0.85">${esc(cell.name.toUpperCase())}</text>`
-              return `<g class="grid-ov-cell${on ? " is-here" : ""}" data-ov-lane="${esc(cell.laneId)}" data-ov-room="${esc(cell.roomId)}" data-ov-sub="${esc(cell.subId)}" role="button" tabindex="0">
-                <rect class="grid-ov-cell__hit" x="${cell.x}" y="${cell.y}" width="${cell.w}" height="${cell.h}" fill="${on ? "rgba(34,197,94,0.16)" : "transparent"}" stroke="${on ? "#22c55e" : "currentColor"}" stroke-width="${tiny ? 0.7 : 1.15}" />
+                  : `<text class="grid-ov-label" x="${cell.x + 3}" y="${cell.y + cell.h - 5}" font-size="8" letter-spacing="0.08em">${esc(cell.name.toUpperCase())}</text>`
+              return `<g class="grid-ov-cell${on ? " is-here" : ""}" style="--cell-tone:${tone}" data-ov-lane="${esc(cell.laneId)}" data-ov-room="${esc(cell.roomId)}" data-ov-sub="${esc(cell.subId)}" role="button" tabindex="0">
+                <rect class="grid-ov-cell__hit" x="${cell.x}" y="${cell.y}" width="${cell.w}" height="${cell.h}" stroke="currentColor" stroke-width="${tiny ? 0.7 : 1.15}" />
                 ${wire(cell, { tiny })}
                 ${subLabel}
               </g>`
@@ -183,7 +197,7 @@ function paint(config, current, { mode }) {
           return `${caption}${cells}`
         })
         .join("")
-      return `${label}${rooms}`
+      return `<g class="grid-ov-row" data-tone="${esc(row.lane.tone || "")}" style="color:${tone};--cell-tone:${tone}">${label}${rooms}</g>`
     })
     .join("")
 

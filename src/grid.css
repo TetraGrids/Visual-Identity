@@ -141,6 +141,18 @@ body.grid-body,
   flex-direction: column;
 }
 
+.grid-sub {
+  flex-direction: column;
+}
+
+.grid-sub__page {
+  margin-bottom: 8vh;
+}
+
+.grid-sub__page:last-child {
+  margin-bottom: 0;
+}
+
 .grid-lane,
 .grid-room,
 .grid-sub__page {
@@ -193,7 +205,7 @@ body.grid-body,
   background: color-mix(in srgb, var(--lane-accent) 26%, var(--tetra-void));
 }
 
-.grid-shell.is-bleed .grid-rail,
+.grid-shell.is-bleed .grid-nav,
 .grid-shell.is-bleed .grid-way,
 .grid-shell.is-bleed .grid-notes-btn {
   filter: drop-shadow(0 0 12px #000);
@@ -844,16 +856,22 @@ body.grid-body,
   display: none;
 }
 
-.grid-rail {
+.grid-nav {
   position: absolute;
   z-index: 8;
-  left: calc(14px + 10px);
-  top: 50%;
-  transform: translateY(-50%);
+  left: 10px;
+  top: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 8px;
+  max-height: calc(100vh - 20px);
+}
+
+.grid-rail {
   display: flex;
   flex-direction: column;
   gap: 6px;
-  max-height: 82vh;
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -862,11 +880,11 @@ body.grid-body,
   width: 40px;
   height: 44px;
   padding: 3px;
-  margin-bottom: 6px;
   color: var(--tetra-ink-mute);
   background: var(--tetra-void);
   border: 1px solid var(--tetra-glass-border);
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .grid-overview-btn__mark,
@@ -876,13 +894,18 @@ body.grid-body,
   height: 100%;
 }
 
+.grid-overview-btn:hover .grid-overview-btn__mark,
+.grid-overview-btn:focus-visible .grid-overview-btn__mark,
+.grid-overview-btn[aria-expanded="true"] .grid-overview-btn__mark {
+  filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.7));
+}
+
 .grid-overview-btn:hover,
 .grid-overview-btn:focus-visible,
 .grid-overview-btn[aria-expanded="true"] {
   color: var(--tetra-green);
-  border-color: var(--tetra-green);
+  border-color: color-mix(in srgb, var(--tetra-green) 55%, transparent);
   outline: none;
-  filter: drop-shadow(0 0 10px rgba(34, 197, 94, 0.45));
 }
 
 .grid-shell.is-overview .grid-notes-btn,
@@ -917,6 +940,10 @@ body.grid-body,
   opacity: 1;
   pointer-events: auto;
   transition-delay: 0.32s;
+}
+
+.grid-shell.is-rail-collapsed .grid-rail {
+  display: none;
 }
 
 .grid-overview__kicker {
@@ -971,17 +998,32 @@ body.grid-body,
   cursor: pointer;
 }
 
-.grid-ov-cell.is-here {
-  color: var(--tetra-green);
-  filter: drop-shadow(0 0 8px rgba(34, 197, 94, 0.45));
+.grid-ov-cell.is-here,
+.grid-ov-cell:hover {
+  color: var(--tetra-void);
 }
 
 .grid-ov-cell:focus {
   outline: none;
 }
 
+.grid-ov-cell__hit {
+  fill: transparent;
+}
+
+.grid-ov-cell.is-here .grid-ov-cell__hit,
 .grid-ov-cell:hover .grid-ov-cell__hit {
-  stroke: var(--tetra-ink);
+  fill: var(--cell-tone, var(--tetra-green));
+  stroke: var(--cell-tone, var(--tetra-green));
+}
+
+.grid-ov-label {
+  fill: currentColor;
+}
+
+.grid-ov-cell.is-here .grid-ov-label,
+.grid-ov-cell:hover .grid-ov-label {
+  fill: var(--tetra-void);
 }
 
 .grid-rail__btn {
@@ -1004,13 +1046,18 @@ body.grid-body,
 .grid-rail__btn.is-on {
   opacity: 1;
   color: var(--tone, var(--tetra-green));
-  filter: drop-shadow(0 0 10px color-mix(in srgb, var(--tone, var(--tetra-green)) 70%, transparent));
+}
+
+.grid-rail__btn.is-on svg,
+.grid-rail__btn:hover svg,
+.grid-rail__btn:focus-visible svg {
+  filter: drop-shadow(0 0 8px color-mix(in srgb, var(--tone, var(--tetra-green)) 80%, transparent));
 }
 
 .grid-rail__btn:hover,
 .grid-rail__btn:focus-visible {
   opacity: 1;
-  outline: 1px solid var(--tetra-gold-line);
+  outline: none;
 }
 
 .grid-way {
@@ -1105,10 +1152,19 @@ body.grid-body,
 }
 
 @media (max-width: 720px) {
+  .grid-rail {
+    display: none;
+  }
+
+  .grid-nav {
+    top: 8px;
+    left: 8px;
+  }
+
   .grid-head,
   .grid-pane,
   .grid-stats {
-    padding-left: 56px;
+    padding-left: 16px;
     margin-left: 12px;
   }
 
@@ -1125,19 +1181,19 @@ body.grid-body,
   }
 
   .grid-head {
-    padding-top: 48px;
+    padding-top: 56px;
   }
 
   .grid-way {
-    top: 52px;
-    left: 56px;
+    top: 14px;
+    left: 58px;
     right: 88px;
     transform: none;
   }
 
   .grid-map__label {
-    left: 56px;
-    top: 52px;
+    left: 16px;
+    top: 56px;
   }
 
   .grid-overview__kicker,

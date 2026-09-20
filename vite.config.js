@@ -13,6 +13,7 @@ export default defineConfig({
         landing: resolve(root, "landing.html"),
         previews: resolve(root, "previews.html"),
         grid: resolve(root, "grid.html"),
+        on: resolve(root, "tetra-on.html"),
       },
     },
   },

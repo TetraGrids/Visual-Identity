@@ -12,6 +12,7 @@ mountTetraChrome({
   nav: [
     { href: "/#demos", label: "Demos" },
     { href: "/grid.html", label: "Grid" },
+    { href: "/tetra-on.html", label: "On" },
     { href: "#controls", label: "Controls" },
     { href: "#fields", label: "Fields" },
     { href: "#overlays", label: "Overlays" },
@@ -22,6 +23,7 @@ mountTetraChrome({
     { href: "/landing.html", label: "Landing UI" },
     { href: "/", label: "Guide" },
     { href: "/grid.html", label: "The Grid" },
+    { href: "/tetra-on.html", label: "Tetra On" },
     { href: "https://know.tetra.earth", label: "Know" },
     { href: "https://tetra.earth", label: "tetra.earth" },
   ],
