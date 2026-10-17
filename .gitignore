@@ -4,6 +4,10 @@ dist/
 *.log
 .env
 .env.*
+!.env.example
+
+# Upstream sparse clone used while adapting LiveKit Meet — not shipped
+.meet-upstream/
 
 # Local live-test builds — not part of the public identity repo
 Examples/

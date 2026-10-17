@@ -1,0 +1,771 @@
+@import "../../brand/tokens.css";
+@import "../../brand/chrome.css";
+@import "../../brand/buttons.css";
+
+/* LiveKit theme → Tetra triad */
+:root {
+  --lk-bg: var(--tetra-void);
+  --lk-bg2: var(--tetra-void-lift);
+  --lk-bg3: var(--tetra-void-panel);
+  --lk-bg4: #161c16;
+  --lk-bg5: #1c241c;
+  --lk-fg: var(--tetra-ink);
+  --lk-fg2: var(--tetra-ink-dim);
+  --lk-fg3: var(--tetra-ink-mute);
+  --lk-fg4: var(--tetra-ink-mute);
+  --lk-fg5: #3d463d;
+  --lk-accent-fg: var(--tetra-void);
+  --lk-accent-bg: var(--tetra-green);
+  --lk-border-color: var(--tetra-glass-border);
+  --lk-border-radius: 0;
+  --lk-font-family: var(--tetra-font);
+}
+
+.meet-body {
+  min-height: 100vh;
+  background: var(--tetra-void);
+  color: var(--tetra-ink);
+  font-family: var(--tetra-font);
+}
+
+.meet-body.meet-in-room .tetra-top,
+.meet-body.meet-in-room .tetra-dock,
+.meet-body.meet-in-room .tetra-footer {
+  display: none !important;
+}
+
+.meet-main {
+  padding-top: calc(var(--tetra-bar-h) + 32px);
+  padding-bottom: var(--tetra-footer-pad);
+  max-width: var(--tetra-max);
+  margin: 0 auto;
+  padding-inline: 24px;
+}
+
+.meet-app--room {
+  height: 100vh;
+  overflow: hidden;
+}
+
+.meet-page-title {
+  margin: 0 0 8px;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 600;
+  letter-spacing: var(--tetra-tracking-display);
+  text-transform: uppercase;
+}
+
+.meet-lede {
+  margin: 0 0 28px;
+  color: var(--tetra-ink-dim);
+  max-width: 42rem;
+}
+
+.meet-section {
+  margin-bottom: 40px;
+}
+
+.meet-section__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.meet-section__head h2 {
+  margin: 0;
+  font-size: 0.85rem;
+  letter-spacing: var(--tetra-tracking-ui);
+  text-transform: uppercase;
+  color: var(--tetra-green);
+}
+
+/* Active strip — CoinPoker tournament style */
+.meet-active-strip {
+  display: flex;
+  gap: 12px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+}
+
+.meet-active-card {
+  flex: 0 0 auto;
+  min-width: 220px;
+  padding: 16px;
+  background: var(--tetra-void-panel);
+  border: 1px solid var(--tetra-glass-border);
+  text-align: left;
+  cursor: pointer;
+  color: inherit;
+  font: inherit;
+}
+
+.meet-active-card:hover {
+  border-color: var(--tetra-green);
+  box-shadow: var(--tetra-glow-green);
+}
+
+.meet-active-card__now {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.7rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--tetra-orange);
+  margin-bottom: 8px;
+}
+
+.meet-active-card__now::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  background: var(--tetra-orange);
+  box-shadow: var(--tetra-glow-orange);
+  animation: meet-pulse 1.2s var(--tetra-ease) infinite;
+}
+
+@keyframes meet-pulse {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.meet-active-card strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.meet-active-card span {
+  color: var(--tetra-ink-dim);
+  font-size: 0.85rem;
+}
+
+/* Scheduled list */
+.meet-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  background: var(--tetra-void-lift);
+  border: 1px solid var(--tetra-glass-border);
+}
+
+.meet-list__row {
+  display: grid;
+  grid-template-columns: 180px 1fr auto;
+  gap: 16px;
+  align-items: center;
+  padding: 14px 16px;
+  background: var(--tetra-void);
+  border: 0;
+  border-bottom: 1px solid var(--tetra-glass-border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: 100%;
+}
+
+.meet-list__row:last-child {
+  border-bottom: 0;
+}
+
+.meet-list__row:hover {
+  background: var(--tetra-void-panel);
+}
+
+.meet-list__when {
+  font-size: 0.75rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tetra-ink-dim);
+}
+
+.meet-list__meta {
+  color: var(--tetra-ink-mute);
+  font-size: 0.85rem;
+}
+
+.meet-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--tetra-glass-border);
+  color: var(--tetra-ink-dim);
+}
+
+.meet-badge--green {
+  border-color: var(--tetra-green);
+  color: var(--tetra-green);
+}
+
+.meet-empty {
+  padding: 24px;
+  color: var(--tetra-ink-mute);
+  border: 1px dashed var(--tetra-glass-border);
+}
+
+/* Forms */
+.meet-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 560px;
+}
+
+.meet-form label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--tetra-ink-dim);
+}
+
+.meet-form input,
+.meet-form select,
+.meet-form textarea {
+  font: inherit;
+  font-size: 1rem;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--tetra-ink);
+  background: var(--tetra-void-lift);
+  border: 1px solid var(--tetra-glass-border);
+  padding: 10px 12px;
+  border-radius: 0;
+}
+
+.meet-form textarea {
+  min-height: 120px;
+  resize: vertical;
+}
+
+.meet-form__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 640px) {
+  .meet-form__row {
+    grid-template-columns: 1fr;
+  }
+  .meet-list__row {
+    grid-template-columns: 1fr;
+  }
+}
+
+.meet-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.meet-preview {
+  padding: 12px;
+  background: var(--tetra-void-lift);
+  border: 1px solid var(--tetra-glass-border);
+  color: var(--tetra-ink-dim);
+  font-size: 0.95rem;
+}
+
+.meet-preview :is(h1, h2, h3, p, ul, ol) {
+  margin-top: 0;
+}
+
+.meet-thumb {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+  border: 1px solid var(--tetra-glass-border);
+  background: var(--tetra-void-panel);
+}
+
+.meet-thumb--empty {
+  display: grid;
+  place-items: center;
+  color: var(--tetra-ink-mute);
+  font-size: 1.5rem;
+}
+
+.meet-links {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Join screen — PreJoin host */
+.meet-join {
+  display: grid;
+  gap: 24px;
+  max-width: 720px;
+  margin: 0 auto;
+}
+
+.meet-join__card {
+  padding: 24px;
+  background: var(--tetra-void-panel);
+  border: 1px solid var(--tetra-glass-border);
+}
+
+.meet-join__modes {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.meet-join__mode {
+  padding: 16px;
+  background: var(--tetra-void);
+  border: 1px solid var(--tetra-glass-border);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.meet-join__mode[aria-pressed="true"] {
+  border-color: var(--tetra-green);
+  box-shadow: var(--tetra-glow-green);
+}
+
+.meet-join__mode strong {
+  display: block;
+  margin-bottom: 4px;
+}
+
+.meet-join__mode span {
+  color: var(--tetra-ink-dim);
+  font-size: 0.85rem;
+}
+
+.meet-prejoin-host [data-lk-theme] {
+  width: 100%;
+}
+
+/* Room shell */
+.meet-room {
+  position: relative;
+  height: 100vh;
+  width: 100vw;
+  background: var(--tetra-void);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: 1fr auto;
+}
+
+.meet-room__stage {
+  position: relative;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+}
+
+.meet-room__hud {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.meet-room__hud > * {
+  pointer-events: auto;
+}
+
+.meet-timer-tr {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 5;
+}
+
+.meet-notify {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  z-index: 6;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 280px;
+  margin-top: 72px;
+}
+
+.meet-notify__item {
+  padding: 10px 14px;
+  background: var(--tetra-void-panel);
+  border: 1px solid var(--tetra-glass-border);
+  border-left: 3px solid var(--tetra-green);
+  animation: meet-slide-in 0.35s var(--tetra-ease);
+  font-size: 0.9rem;
+}
+
+.meet-notify__item.is-out {
+  animation: meet-slide-out 0.35s var(--tetra-ease) forwards;
+}
+
+@keyframes meet-slide-in {
+  from {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+@keyframes meet-slide-out {
+  to {
+    opacity: 0;
+    transform: translateX(24px);
+  }
+}
+
+/* Wheel */
+.meet-wheel {
+  position: relative;
+  width: min(72vh, 640px);
+  height: min(72vh, 640px);
+  margin: 0 auto;
+}
+
+.meet-wheel__node {
+  position: absolute;
+  width: 56px;
+  height: 56px;
+  margin: -28px 0 0 -28px;
+  padding: 0;
+  border: 2px solid var(--tetra-glass-border);
+  background: transparent;
+  display: grid;
+  place-items: center;
+  cursor: grab;
+  color: var(--tetra-ink);
+  font-weight: 600;
+  font-size: 1.1rem;
+  overflow: visible;
+  user-select: none;
+  transition: transform 0.25s var(--tetra-ease), box-shadow 0.25s var(--tetra-ease);
+  /* Circles via clip on the face — boxes stay radius 0 */
+}
+
+.meet-wheel__face {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  display: grid;
+  place-items: center;
+  background: var(--tetra-void-panel);
+  border: 2px solid var(--tetra-glass-border);
+  /* HUD avatars are circles (exception to radius-0 boxes) */
+  border-radius: 50% !important;
+  overflow: hidden;
+}
+
+.meet-wheel__node img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.meet-wheel__node.is-speaker {
+  width: 96px;
+  height: 96px;
+  margin: -48px 0 0 -48px;
+  border-color: transparent;
+  font-size: 1.6rem;
+  z-index: 2;
+}
+
+.meet-wheel__node.is-speaker .meet-wheel__face {
+  border-color: var(--tetra-green);
+  box-shadow: var(--tetra-glow-green);
+}
+
+.meet-wheel__node.is-queue .meet-wheel__face {
+  border-color: var(--tetra-violet);
+  box-shadow: var(--tetra-glow-violet);
+}
+
+.meet-wheel__node.is-local {
+  cursor: grab;
+}
+
+.meet-wheel__node:active {
+  cursor: grabbing;
+}
+
+.meet-wheel__label {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.65rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tetra-ink-dim);
+  white-space: nowrap;
+}
+
+/* Semicircle / ring timers */
+.meet-ring {
+  position: absolute;
+  inset: -12px;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.meet-semi {
+  width: 64px;
+  height: 64px;
+}
+
+.meet-semi svg {
+  width: 100%;
+  height: 100%;
+  transform: rotate(-90deg);
+}
+
+.meet-semi__track {
+  fill: none;
+  stroke: var(--tetra-void-panel);
+  stroke-width: 4;
+}
+
+.meet-semi__prog {
+  fill: none;
+  stroke: var(--tetra-green);
+  stroke-width: 4;
+  stroke-linecap: butt;
+  transition: stroke-dashoffset 0.2s linear;
+}
+
+.meet-semi__prog.is-warn {
+  stroke: var(--tetra-orange);
+}
+
+.meet-semi__prog.is-cut {
+  stroke: #ef4444;
+}
+
+.meet-semi__text {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  transform: none;
+}
+
+.meet-semi {
+  position: relative;
+}
+
+/* Done / transition / landing overlays */
+.meet-overlay {
+  position: absolute;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%);
+  z-index: 4;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.meet-landing {
+  text-align: center;
+  padding: 24px;
+  max-width: 420px;
+}
+
+.meet-landing h2 {
+  margin: 0 0 8px;
+  letter-spacing: var(--tetra-tracking-display);
+  text-transform: uppercase;
+}
+
+.meet-transition {
+  font-size: 2.5rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--tetra-green);
+  text-shadow: var(--tetra-glow-green);
+}
+
+/* Bottom-left triangle — hides LiveKit control bar */
+.meet-bar-toggle {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 56px;
+  height: 56px;
+  z-index: 20;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: var(--tetra-glass);
+  backdrop-filter: blur(var(--tetra-glass-blur));
+  -webkit-backdrop-filter: blur(var(--tetra-glass-blur));
+  clip-path: polygon(0 100%, 0 0, 100% 100%);
+  border-top: 1px solid var(--tetra-glass-border);
+  border-right: 1px solid var(--tetra-glass-border);
+}
+
+.meet-bar-toggle__mark {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  width: 18px;
+  height: 18px;
+  background: var(--tetra-green);
+  clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+}
+
+.meet-room[data-bar-hidden="true"] .lk-control-bar,
+.meet-room[data-bar-hidden="true"] .lk-agent-control-bar {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateY(20px);
+}
+
+.meet-room .lk-control-bar {
+  transition: opacity 0.35s var(--tetra-ease), transform 0.35s var(--tetra-ease);
+}
+
+/* Right panel */
+.meet-right {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: min(360px, 100vw);
+  height: 100vh;
+  z-index: 15;
+  background: var(--tetra-void-panel);
+  border-left: 1px solid var(--tetra-glass-border);
+  display: flex;
+  flex-direction: column;
+  transform: translateX(100%);
+  transition: transform 0.4s var(--tetra-ease);
+}
+
+.meet-right.is-open {
+  transform: translateX(0);
+}
+
+.meet-right__tabs {
+  display: flex;
+  border-bottom: 1px solid var(--tetra-glass-border);
+}
+
+.meet-right__tabs button {
+  flex: 1;
+  padding: 12px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  color: var(--tetra-ink-dim);
+  font: inherit;
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+
+.meet-right__tabs button[aria-selected="true"] {
+  color: var(--tetra-green);
+  border-bottom-color: var(--tetra-green);
+}
+
+.meet-right__body {
+  flex: 1;
+  overflow: auto;
+  padding: 16px;
+}
+
+.meet-right-toggle {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  width: 48px;
+  height: 48px;
+  z-index: 16;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  background: var(--tetra-glass);
+  backdrop-filter: blur(var(--tetra-glass-blur));
+  clip-path: polygon(100% 100%, 0 100%, 100% 0);
+}
+
+/* Vote panel */
+.meet-vote {
+  padding: 20px;
+  background: var(--tetra-void-panel);
+  border: 1px solid var(--tetra-glass-border);
+  max-width: 400px;
+}
+
+.meet-vote ol {
+  margin: 12px 0;
+  padding-left: 1.25rem;
+}
+
+.meet-vote li {
+  margin-bottom: 6px;
+}
+
+.meet-results {
+  text-align: center;
+  padding: 32px;
+}
+
+.meet-results__place {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  margin: 12px 0;
+  font-size: 1.25rem;
+}
+
+.meet-results__trophy {
+  color: var(--tetra-gold);
+}
+
+.meet-fail {
+  text-align: center;
+  padding: 32px;
+  color: var(--tetra-orange);
+}
+
+/* History */
+.meet-history .meet-list__row {
+  cursor: default;
+}
+
+.meet-note {
+  font-size: 0.85rem;
+  color: var(--tetra-ink-mute);
+}
+
+.meet-note code {
+  color: var(--tetra-green);
+}
+
+/* Soften LiveKit default radius */
+.lk-button,
+.lk-chat,
+.lk-prejoin,
+.lk-participant-tile {
+  border-radius: 0 !important;
+}
+
+.lk-button {
+  background: var(--tetra-green) !important;
+  color: var(--tetra-void) !important;
+}
