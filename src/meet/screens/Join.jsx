@@ -3,12 +3,14 @@
  * XPR login gate for participate, TokenSource when configured else demo mode.
  */
 import React from "react"
-import { PreJoin } from "@livekit/components-react"
 import { navigate } from "../router.js"
 import { getMeeting, loadProfile, saveSession, loadRegistration } from "../state/store.js"
 import { canJoinMeeting, FORMAT_META } from "../state/machine.js"
 import { hasTokenServer, fetchRoomConnection } from "../lib/token.js"
+import { loadLook, saveLook } from "../lib/look.js"
 import { loginXpr } from "../chain/index.js"
+import { WaitingPreview } from "../components/FocusStage.jsx"
+import { CallSetup } from "../components/CallSetup.jsx"
 
 export function Join({ meetingId }) {
   const meeting = getMeeting(meetingId)
@@ -18,6 +20,9 @@ export function Join({ meetingId }) {
   const [busy, setBusy] = React.useState(false)
   const [error, setError] = React.useState("")
   const [demoName, setDemoName] = React.useState(profile.name || "You")
+  const [look, setLook] = React.useState(loadLook)
+  const previewTrack = React.useRef(null)
+  React.useEffect(() => () => previewTrack.current?.stop(), [])
 
   if (!meeting) {
     return (
@@ -30,7 +35,7 @@ export function Join({ meetingId }) {
     )
   }
 
-  const late = !canJoinMeeting(meeting)
+  const closed = !canJoinMeeting(meeting)
   const demo = !hasTokenServer()
 
   async function enter(choices) {
@@ -95,13 +100,13 @@ export function Join({ meetingId }) {
         {demo ? " · demo mode (set VITE_LK_TOKEN_SERVER_ID for LiveKit Cloud)" : ""}
       </p>
 
-      {late && (
+      {closed && (
         <p className="meet-empty" style={{ borderColor: "var(--tetra-orange)", color: "var(--tetra-orange)" }}>
-          Entry closed — more than 10 minutes after start.
+          Entry closed. Room opens 15 minutes before start; locks after the 10-minute landing.
         </p>
       )}
 
-      {!late && (
+      {!closed && (
         <div className="meet-join__card">
           <div className="meet-join__modes">
             <button
@@ -153,44 +158,45 @@ export function Join({ meetingId }) {
               </button>
             </div>
           ) : (
-            <div className="meet-prejoin-host" data-lk-theme="default">
-              {/* LiveKit PreJoin — same component as upstream meet */}
-              <PreJoin
-                defaults={{
-                  username: profile.name || "",
-                  videoEnabled: true,
-                  audioEnabled: true,
+            <div className="meet-prejoin-host">
+              <WaitingPreview
+                camera={look.videoEnabled !== false}
+                look={look}
+                onStream={(track) => {
+                  previewTrack.current = track
                 }}
-                onSubmit={(values) => enter(values)}
-                onError={(e) => setError(String(e))}
-                joinLabel={busy ? "Joining…" : demo ? "Start (demo)" : "Join meeting"}
               />
-              {demo && (
-                <div className="meet-actions" style={{ marginTop: 16, flexDirection: "column", alignItems: "stretch" }}>
-                  <label>
-                    Demo display name
-                    <input
-                      value={demoName}
-                      onChange={(e) => setDemoName(e.target.value)}
-                      placeholder="Your name"
-                    />
-                  </label>
-                  <button
-                    type="button"
-                    className="tetra-btn"
-                    disabled={busy}
-                    onClick={() =>
-                      enter({
-                        username: demoName.trim() || "You",
-                        videoEnabled: false,
-                        audioEnabled: false,
-                      })
-                    }
-                  >
-                    Continue without devices (demo)
-                  </button>
-                </div>
-              )}
+              <CallSetup
+                look={look}
+                onLook={(next) => {
+                  saveLook(next)
+                  setLook(next)
+                }}
+              />
+              <label className="meet-setup__name">
+                Display name
+                <input
+                  value={demoName}
+                  onChange={(e) => setDemoName(e.target.value)}
+                  placeholder="Your name"
+                />
+              </label>
+              <button
+                type="button"
+                className="tetra-btn"
+                disabled={busy}
+                onClick={() =>
+                  enter({
+                    username: demoName.trim() || profile.name || "You",
+                    videoEnabled: look.videoEnabled !== false,
+                    audioEnabled: look.audioEnabled !== false,
+                    videoDeviceId: look.videoDeviceId,
+                    audioDeviceId: look.audioDeviceId,
+                  })
+                }
+              >
+                {busy ? "Joining…" : demo ? "Start (demo)" : "Join meeting"}
+              </button>
             </div>
           )}
 

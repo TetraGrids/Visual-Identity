@@ -1,22 +1,34 @@
 import React from "react"
+import { SLOT_COUNT, slotAngle } from "../state/machine.js"
+import { SpeakerRing } from "./SpeakerRing.jsx"
+import { StreamVideo } from "./FocusStage.jsx"
+
+const RING = 38 // % radius of overlay
+
+function slotXY(slotIndex) {
+  const a = slotAngle(slotIndex)
+  return {
+    x: 50 + RING * Math.cos(a),
+    y: 50 + RING * Math.sin(a),
+  }
+}
 
 /**
- * Circular heads-up display.
- * Speaker at top (larger). Others around the ring.
- * Drag/click own circle to request next — requesters cluster at next-up slot
- * (first largest, others 61.8%).
+ * Small bottom overlay wheel (max 20% viewport height, min 100px).
+ * 8 fixed slots from top-center clockwise — not redistributed when fewer people.
+ * Drag local icon: dashed guides appear; drop on slot 0 = claim active/next;
+ * drop on another slot = swap; release elsewhere = snap back.
  */
 export function Wheel({
-  participants,
+  slots = [],
+  participants = [],
   speakerId,
-  queue,
-  requests = [],
   localId,
-  onRequestNext,
-  onPickNext,
+  localStream,
   speakerStartedAt,
   now,
-  SpeakerRing,
+  onClaimActive,
+  onMoveSlot,
 }) {
   const byId = React.useMemo(() => {
     const m = new Map()
@@ -24,112 +36,134 @@ export function Wheel({
     return m
   }, [participants])
 
-  const order = React.useMemo(() => {
-    const ids = participants.map((p) => p.id)
-    if (!speakerId) return ids
-    const rest = ids.filter((id) => id !== speakerId)
-    const q = queue.filter((id) => rest.includes(id))
-    const unqueued = rest.filter((id) => !queue.includes(id))
-    return [speakerId, ...q, ...unqueued]
-  }, [participants, speakerId, queue])
+  const [draggingId, setDraggingId] = React.useState(null)
+  const [dragPos, setDragPos] = React.useState(null) // {x%, y%} relative to wheel
+  const wheelRef = React.useRef(null)
+  const originSlot = React.useRef(-1)
 
-  const n = Math.max(order.length, 1)
+  const filled = slots.map((id, i) => ({ id, i, ...slotXY(i) }))
 
-  const nodes = order.map((id, i) => {
-    const isSpeaker = id === speakerId
-    const reqIndex = requests.indexOf(id)
-    const inRequestCluster = !isSpeaker && reqIndex >= 0
-
-    // Speaker sits at top of the ring (larger); others spaced clockwise.
-    const ring = 38
-    let angle = -Math.PI / 2
-    let radius = ring
-    let scale = 1
-
-    if (isSpeaker) {
-      angle = -Math.PI / 2
-      radius = ring
-      scale = 1.35
-    } else if (inRequestCluster) {
-      // next-up slot: to the right of speaker
-      const base = -Math.PI / 2 + (2 * Math.PI) / Math.max(n, 2)
-      if (reqIndex === 0) {
-        angle = base
-        radius = ring
-        scale = 1
-      } else {
-        const fan = (reqIndex - 1) * 0.28 - 0.14
-        angle = base + fan
-        radius = ring - 4
-        scale = 0.618
-      }
-    } else {
-      const step = (2 * Math.PI) / n
-      angle = -Math.PI / 2 + i * step
-      radius = ring
+  function clientToPercent(clientX, clientY) {
+    const rect = wheelRef.current.getBoundingClientRect()
+    return {
+      x: ((clientX - rect.left) / rect.width) * 100,
+      y: ((clientY - rect.top) / rect.height) * 100,
     }
+  }
 
-    const x = 50 + radius * Math.cos(angle)
-    const y = 50 + radius * Math.sin(angle)
-    const p = byId.get(id)
-    return { id, p, x, y, isSpeaker, scale, reqIndex, inRequestCluster }
-  })
+  function nearestSlot(x, y) {
+    let best = -1
+    let bestDist = Infinity
+    for (let i = 0; i < SLOT_COUNT; i++) {
+      const { x: sx, y: sy } = slotXY(i)
+      const d = Math.hypot(x - sx, y - sy)
+      if (d < bestDist) {
+        bestDist = d
+        best = i
+      }
+    }
+    // accept only if close enough (~18% of overlay)
+    return bestDist < 18 ? best : -1
+  }
 
-  function onDragEnd(id, ev) {
+  function onPointerDown(id, slotIndex, e) {
     if (id !== localId) return
-    const rect = ev.currentTarget.parentElement.getBoundingClientRect()
-    const cx = rect.left + rect.width / 2
-    const cy = rect.top + rect.height * 0.2
-    if (Math.hypot(ev.clientX - cx, ev.clientY - cy) < rect.width * 0.35) {
-      onRequestNext?.(id)
+    e.preventDefault()
+    e.currentTarget.setPointerCapture?.(e.pointerId)
+    originSlot.current = slotIndex
+    setDraggingId(id)
+    setDragPos(clientToPercent(e.clientX, e.clientY))
+  }
+
+  function onPointerMove(e) {
+    if (!draggingId) return
+    setDragPos(clientToPercent(e.clientX, e.clientY))
+  }
+
+  function onPointerUp(e) {
+    if (!draggingId) return
+    const pos = clientToPercent(e.clientX, e.clientY)
+    const target = nearestSlot(pos.x, pos.y)
+    const id = draggingId
+    setDraggingId(null)
+    setDragPos(null)
+    if (target < 0) return // snap back (no state change)
+    if (target === 0) {
+      onClaimActive?.(id)
+      return
+    }
+    if (target !== originSlot.current) {
+      onMoveSlot?.(id, target)
     }
   }
 
   return (
-    <div className="meet-wheel" role="list" aria-label="Participants">
-      {nodes.map(({ id, p, x, y, isSpeaker, scale, reqIndex, inRequestCluster }) => (
-        <button
-          key={id}
-          type="button"
-          role="listitem"
-          className={[
-            "meet-wheel__node",
-            isSpeaker ? "is-speaker" : "",
-            inRequestCluster ? "is-queue" : "",
-            id === localId ? "is-local" : "",
-          ]
-            .filter(Boolean)
-            .join(" ")}
-          style={{
-            left: `${x}%`,
-            top: `${y}%`,
-            transform: `scale(${scale})`,
-            zIndex: isSpeaker ? 3 : inRequestCluster ? 2 : 1,
-          }}
-          draggable={id === localId}
-          onDragEnd={(e) => onDragEnd(id, e)}
-          onClick={() => {
-            if (speakerId === localId && inRequestCluster && reqIndex >= 0) {
-              onPickNext?.(id)
-            } else if (id === localId && !isSpeaker) {
-              onRequestNext?.(id)
+    <div
+      className={`meet-wheel${draggingId ? " is-dragging" : ""}`}
+      ref={wheelRef}
+      role="list"
+      aria-label="Speak order — 8 slots"
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerCancel={onPointerUp}
+    >
+      {/* Always-reserved 8 slot guides; stronger when dragging */}
+      {Array.from({ length: SLOT_COUNT }, (_, i) => {
+        const { x, y } = slotXY(i)
+        return (
+          <div
+            key={`guide-${i}`}
+            className={`meet-wheel__guide${i === 0 ? " is-active" : ""}${draggingId ? " is-visible" : ""}`}
+            style={{ left: `${x}%`, top: `${y}%` }}
+            aria-hidden="true"
+          />
+        )
+      })}
+
+      {filled.map(({ id, i, x, y }) => {
+        if (!id) return null
+        const p = byId.get(id)
+        const isSpeaker = id === speakerId || i === 0
+        const isDragging = draggingId === id
+        const left = isDragging && dragPos ? dragPos.x : x
+        const top = isDragging && dragPos ? dragPos.y : y
+        return (
+          <button
+            key={id}
+            type="button"
+            role="listitem"
+            className={[
+              "meet-wheel__node",
+              isSpeaker ? "is-speaker" : "",
+              id === localId ? "is-local" : "",
+              isDragging ? "is-dragging" : "",
+            ]
+              .filter(Boolean)
+              .join(" ")}
+            style={{ left: `${left}%`, top: `${top}%`, zIndex: isDragging ? 5 : isSpeaker ? 3 : 1 }}
+            onPointerDown={(e) => onPointerDown(id, i, e)}
+            title={
+              i === 0
+                ? `${p?.name} — active (drag here to go first)`
+                : `${p?.name} — slot ${i + 1}`
             }
-          }}
-          title={
-            isSpeaker
-              ? `${p?.name} speaking`
-              : inRequestCluster
-                ? `${p?.name} wants next (#${reqIndex + 1})`
-                : p?.name
-          }
-        >
-          {isSpeaker && SpeakerRing ? <SpeakerRing startedAt={speakerStartedAt} now={now} /> : null}
-          <span className="meet-wheel__face">
-            {p?.avatarUrl ? <img src={p.avatarUrl} alt="" /> : p?.letter || "?"}
-          </span>
-          <span className="meet-wheel__label">{p?.name}</span>
-        </button>
-      ))}
+          >
+            {isSpeaker && speakerStartedAt ? (
+              <SpeakerRing startedAt={speakerStartedAt} now={now} />
+            ) : null}
+            <span className="meet-wheel__face">
+              {id === localId && localStream ? (
+                <StreamVideo stream={localStream} />
+              ) : p?.avatarUrl ? (
+                <img src={p.avatarUrl} alt="" draggable={false} />
+              ) : (
+                p?.letter || "?"
+              )}
+            </span>
+            <span className="meet-wheel__label">{p?.name}</span>
+          </button>
+        )
+      })}
     </div>
   )
 }

@@ -5,7 +5,8 @@
  */
 import React, { useEffect, useMemo } from "react"
 import { formatChatMessageLinks, RoomContext, VideoConference } from "@livekit/components-react"
-import { Room, RoomEvent, VideoPresets } from "livekit-client"
+import { Room, RoomEvent, Track, VideoPresets } from "livekit-client"
+import { loadLook, paintLook } from "./look.js"
 import { KeyboardShortcuts } from "./KeyboardShortcuts.jsx"
 import { SettingsMenu } from "./SettingsMenu.jsx"
 
@@ -36,9 +37,25 @@ export function VideoConferenceClient({
 
     room
       .connect(liveKitUrl, token, { autoSubscribe: true })
-      .then(() => {
-        if (videoEnabled) room.localParticipant.setCameraEnabled(true).catch(console.error)
-        if (audioEnabled) room.localParticipant.setMicrophoneEnabled(true).catch(console.error)
+      .then(async () => {
+        const look = loadLook()
+        if (videoEnabled) {
+          await room.localParticipant
+            .setCameraEnabled(true, look.videoDeviceId ? { deviceId: look.videoDeviceId } : undefined)
+            .catch(console.error)
+          const pub = room.localParticipant.getTrackPublication(Track.Source.Camera)
+          if (pub?.track && look.background && look.background !== "none") {
+            await paintLook(pub.track, look.background).catch(console.error)
+          }
+        }
+        if (audioEnabled) {
+          await room.localParticipant
+            .setMicrophoneEnabled(true, look.audioDeviceId ? { deviceId: look.audioDeviceId } : undefined)
+            .catch(console.error)
+        }
+        if (look.audioOutputId) {
+          await room.switchActiveDevice("audiooutput", look.audioOutputId).catch(console.error)
+        }
       })
       .catch((error) => {
         console.error(error)

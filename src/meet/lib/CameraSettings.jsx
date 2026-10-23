@@ -1,4 +1,4 @@
-/** Adapted from livekit-examples/meet lib/CameraSettings.tsx — backgrounds deferred (TODO). */
+/** Adapted from livekit-examples/meet lib/CameraSettings.tsx */
 import React from "react"
 import {
   MediaDeviceMenu,
@@ -7,9 +7,12 @@ import {
   VideoTrack,
 } from "@livekit/components-react"
 import { Track } from "livekit-client"
+import { CallSetup } from "../components/CallSetup.jsx"
+import { loadLook, paintLook, saveLook } from "./look.js"
 
 export function CameraSettings() {
   const { cameraTrack, localParticipant } = useLocalParticipant()
+  const [look, setLook] = React.useState(loadLook)
 
   const camTrackRef = React.useMemo(() => {
     return cameraTrack
@@ -36,7 +39,16 @@ export function CameraSettings() {
           <MediaDeviceMenu kind="videoinput" />
         </div>
       </section>
-      {/* TODO: virtual backgrounds via @livekit/track-processors */}
+      <CallSetup
+        devices={false}
+        look={look}
+        onLook={(next) => {
+          saveLook(next)
+          setLook(next)
+          const track = cameraTrack?.track
+          if (track) paintLook(track, next.background).catch(() => {})
+        }}
+      />
     </div>
   )
 }

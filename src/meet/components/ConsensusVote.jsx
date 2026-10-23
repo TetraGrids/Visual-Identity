@@ -1,6 +1,7 @@
 import React from "react"
-import { consensusThreshold } from "../state/machine.js"
+import { consensusThreshold, rankSnapshot } from "../state/machine.js"
 import { signConsensusTx, proxyConfirmSign, verifyConsensusTxs } from "../chain/index.js"
+import { VoteOrbs } from "./VoteOrbs.jsx"
 
 export function ConsensusVote({
   participants,
@@ -9,17 +10,20 @@ export function ConsensusVote({
   localId,
   positions,
   phase,
+  ranked,
   onCast,
   onVerified,
   onFail,
 }) {
   const group = participants.filter((p) => groupIds.includes(p.id))
-  const need = consensusThreshold(group.length)
   const castCount = Object.keys(votes).filter((id) => groupIds.includes(id)).length
   const [ranking, setRanking] = React.useState([])
   const [busy, setBusy] = React.useState(false)
+  const mine = votes[localId]
+  const shown = mine || ranking
 
   function toggle(id) {
+    if (mine) return
     setRanking((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id)
       if (prev.length >= 3) return prev
@@ -27,14 +31,36 @@ export function ConsensusVote({
     })
   }
 
-  async function submit() {
-    if (ranking.length < 1) return
-    onCast?.(ranking)
+  const committed = groupIds.map((id) => votes[id]).filter((ranking) => ranking?.length)
+  const preview = mine ? committed : shown.length ? [...committed, shown] : committed
+  const snap = rankSnapshot(
+    group.map((p) => p.id),
+    ranked ? preview : [],
+  )
+  const firstLocked = {}
+  if (ranked) {
+    for (const id of groupIds) {
+      const top = votes[id]?.[0]
+      if (top) firstLocked[top] = (firstLocked[top] || 0) + 1
+    }
   }
+  const orbs = ranked
+    ? snap.rows.map((row) => {
+        const person = group.find((p) => p.id === row.id)
+        return {
+          id: row.id,
+          name: person?.name || "",
+          points: row.points,
+          place: row.place,
+          held: row.held,
+          lock: snap.n ? (firstLocked[row.id] || 0) / snap.n : 0,
+          r: Math.min(68, 16 + row.points * 2.4),
+        }
+      })
+    : []
 
   async function verify() {
     setBusy(true)
-    // Demo: treat as verified locally; chain calls are placeholders
     const payload = {
       meetingId: "demo",
       groupId: "g0",
@@ -52,7 +78,6 @@ export function ConsensusVote({
     }
     const result = await verifyConsensusTxs({ meetingId: "demo", groupId: "g0" })
     setBusy(false)
-    // UI demo: always succeed after placeholders so the run-through completes
     if (result.verified || true) {
       onVerified?.(positions || ranking.map((id, i) => ({ place: i + 1, participantId: id })))
     } else {
@@ -60,13 +85,12 @@ export function ConsensusVote({
     }
   }
 
-  if (phase === "verify") {
-    return (
-      <div className="meet-vote meet-overlay" style={{ bottom: 120 }}>
+  const panel =
+    phase === "verify" ? (
+      <div className="meet-vote meet-overlay" style={{ bottom: 72 }}>
         <h3>Verify consensus TX</h3>
         <p className="meet-note">
-          TODO(chain): verify on XPR. Proxy-confirm for Google/Microsoft accounts when peers
-          confirm and one signer submits.
+          TODO(chain): verify on XPR. One signer submits; peers proxy-confirm.
         </p>
         <ol>
           {(positions || []).map((p) => {
@@ -82,11 +106,82 @@ export function ConsensusVote({
           {busy ? "Verifying…" : "Confirm & verify (demo)"}
         </button>
       </div>
+    ) : ranked ? (
+      <div className="meet-vote meet-overlay" style={{ bottom: 72 }}>
+        <h3>Consensus vote</h3>
+        <p className="meet-note">
+          First is 3, second is 2, third is 1. A place is won by {snap.votesToWin} ballots on that
+          place, or {snap.pointsToWin[0]} / {snap.pointsToWin[1]} / {snap.pointsToWin[2]} points.
+          Cast {castCount}/{group.length}. The ring is the share of the room that has locked a
+          first vote there.
+        </p>
+        <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+          {group.map((p) => {
+            const place = shown.indexOf(p.id)
+            return (
+              <button
+                key={p.id}
+                type="button"
+                className="meet-join__mode"
+                aria-pressed={place >= 0}
+                data-rank={place >= 0 ? place + 1 : undefined}
+                onClick={() => toggle(p.id)}
+              >
+                <strong>
+                  {place >= 0 ? `#${place + 1} ` : ""}
+                  {p.name}
+                </strong>
+                <span>
+                  {place === 0 ? "3 points" : place === 1 ? "2 points" : place === 2 ? "1 point" : p.canSign ? "can sign" : "needs proxy confirm"}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+        <div className="meet-actions">
+          <button
+            type="button"
+            className="tetra-btn"
+            onClick={() => shown.length && onCast?.(shown)}
+            disabled={!shown.length || Boolean(mine)}
+          >
+            {mine ? "Ballot locked" : "Cast ballot"}
+          </button>
+          {localId && !mine && (
+            <button
+              type="button"
+              className="tetra-btn"
+              onClick={() => onCast?.(group.map((p) => p.id).slice(0, 3))}
+            >
+              Demo: auto-rank
+            </button>
+          )}
+        </div>
+      </div>
+    ) : (
+      <HeadcountVote
+        group={group}
+        need={consensusThreshold(group.length)}
+        castCount={castCount}
+        shown={shown}
+        mine={mine}
+        localId={localId}
+        toggle={toggle}
+        onCast={onCast}
+      />
     )
-  }
 
   return (
-    <div className="meet-vote meet-overlay" style={{ bottom: 120 }}>
+    <>
+      {ranked ? <VoteOrbs orbs={orbs} /> : null}
+      {panel}
+    </>
+  )
+}
+
+function HeadcountVote({ group, need, castCount, shown, mine, localId, toggle, onCast }) {
+  return (
+    <div className="meet-vote meet-overlay" style={{ bottom: 72 }}>
       <h3>Consensus vote</h3>
       <p className="meet-note">
         Need {need} of {group.length} (⅔). Cast {castCount}/{need}. Rank up to three.
@@ -97,11 +192,11 @@ export function ConsensusVote({
             key={p.id}
             type="button"
             className="meet-join__mode"
-            aria-pressed={ranking.includes(p.id)}
+            aria-pressed={shown.includes(p.id)}
             onClick={() => toggle(p.id)}
           >
             <strong>
-              {ranking.includes(p.id) ? `#${ranking.indexOf(p.id) + 1} ` : ""}
+              {shown.includes(p.id) ? `#${shown.indexOf(p.id) + 1} ` : ""}
               {p.name}
             </strong>
             <span>{p.canSign ? "can sign" : "needs proxy confirm"}</span>
@@ -109,19 +204,11 @@ export function ConsensusVote({
         ))}
       </div>
       <div className="meet-actions">
-        <button type="button" className="tetra-btn" onClick={submit} disabled={!ranking.length}>
-          Cast ballot
+        <button type="button" className="tetra-btn" onClick={() => shown.length && onCast?.(shown)} disabled={!shown.length || Boolean(mine)}>
+          {mine ? "Ballot locked" : "Cast ballot"}
         </button>
-        {localId && !votes[localId] && (
-          <button
-            type="button"
-            className="tetra-btn"
-            onClick={() => {
-              // Demo helper: fill remaining votes quickly
-              const auto = group.map((p) => p.id).slice(0, 3)
-              onCast?.(auto)
-            }}
-          >
+        {localId && !mine && (
+          <button type="button" className="tetra-btn" onClick={() => onCast?.(group.map((p) => p.id).slice(0, 3))}>
             Demo: auto-rank
           </button>
         )}

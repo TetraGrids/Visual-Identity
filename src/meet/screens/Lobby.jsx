@@ -1,7 +1,7 @@
 import React from "react"
 import { navigate } from "../router.js"
 import { loadMeetings, formatUtcBadge } from "../state/store.js"
-import { FORMAT_META, canJoinMeeting } from "../state/machine.js"
+import { FORMAT_META, canJoinMeeting, canRegister } from "../state/machine.js"
 
 export function Lobby() {
   const [meetings, setMeetings] = React.useState(() => loadMeetings())
@@ -11,9 +11,9 @@ export function Lobby() {
   }, [])
 
   const now = Date.now()
-  const active = meetings.filter((m) => m.status === "active" && canJoinMeeting(m, now))
+  const active = meetings.filter((m) => canJoinMeeting(m, now))
   const scheduled = meetings
-    .filter((m) => m.status !== "active")
+    .filter((m) => !canJoinMeeting(m, now))
     .sort((a, b) => a.startsAt - b.startsAt)
 
   return (
@@ -65,31 +65,42 @@ export function Lobby() {
           <h2>Register — upcoming</h2>
         </div>
         <div className="meet-list">
-          {scheduled.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              className="meet-list__row"
-              onClick={() => navigate(`/register/${m.id}`)}
-            >
-              <span className="meet-list__when">{formatUtcBadge(m.startsAt)}</span>
-              <span>
-                <strong>{m.name}</strong>
-                <div className="meet-list__meta">
-                  {FORMAT_META[m.format]?.label || m.format}
-                  {m.visibility === "private" ? " · private" : ""}
-                  {m.recurring ? " · recurring" : ""}
-                </div>
-              </span>
-              <span className="meet-badge meet-badge--green">Register</span>
-            </button>
-          ))}
+          {scheduled.map((m) => {
+            const open = canRegister(m, now)
+            const early =
+              now >= m.startsAt - 15 * 60 * 1000 && now < m.startsAt
+            return (
+              <button
+                key={m.id}
+                type="button"
+                className="meet-list__row"
+                onClick={() =>
+                  navigate(early || canJoinMeeting(m, now) ? `/join/${m.id}` : `/register/${m.id}`)
+                }
+              >
+                <span className="meet-list__when">{formatUtcBadge(m.startsAt)}</span>
+                <span>
+                  <strong>{m.name}</strong>
+                  <div className="meet-list__meta">
+                    {FORMAT_META[m.format]?.label || m.format}
+                    {m.visibility === "private" ? " · private" : ""}
+                    {m.recurring ? " · recurring" : ""}
+                    {open ? " · registration open" : ""}
+                    {early ? " · room opens" : ""}
+                  </div>
+                </span>
+                <span className={`meet-badge${open || early ? " meet-badge--green" : ""}`}>
+                  {early ? "Enter" : open ? "Register" : "Soon"}
+                </span>
+              </button>
+            )
+          })}
         </div>
       </section>
 
       <p className="meet-note">
-        Contributor&apos;s Club: Tuesdays 17:00 UTC · Antelope Roundtable: Wednesdays 17:00 UTC.
-        Entry closes 10 minutes after start.
+        Registration opens 24h before · Room 15 min early · 10 min landing (not in the hour) · then
+        locked. Contributor&apos;s Club Tue 17:00 UTC · Antelope Roundtable Wed 17:00 UTC.
       </p>
     </div>
   )
