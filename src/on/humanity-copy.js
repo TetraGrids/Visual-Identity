@@ -86,6 +86,55 @@ export const alignment = {
   cta: "Confirm alignment",
 }
 
+export const token = {
+  eyebrow: "FALA · Token",
+  headline: "Resources move. Votes stay human.",
+  body: "FALA uses a Flex token to coordinate yield and project funding. After the first Chief Gameday, project funds are intended to route to the elected Chief Stewardship List.",
+  rule: "The token can direct resources. It does not buy a larger vote, a title, or a meeting result.",
+  checks: [
+    "One eligible person keeps one vote.",
+    "Published lists make the destination of funds visible.",
+    "Elected Chiefs sign new budgets into effect.",
+  ],
+  cta: "I understand the token",
+}
+
+export const assembly = {
+  eyebrow: "Assembling",
+  headline: "Building your path into Humanity",
+  lines: [
+    { id: "system", label: "Change the parts" },
+    { id: "democracy", label: "Practice democracy" },
+    { id: "americas", label: "Connect the Americas" },
+    { id: "faction", label: "Enter through FALA" },
+    { id: "token", label: "Keep votes human" },
+  ],
+  cta: "See my path",
+}
+
+export const commitment = {
+  eyebrow: "First action",
+  headline: "Put one action behind the belief",
+  body: "A game begins when someone moves. Choose the first action you intend to take after entering Humanity.",
+  choices: ["Watch a meeting", "Attend and speak", "Bring one person", "Serve FALA locally"],
+  cta: "Make this commitment",
+}
+
+export const rating = {
+  eyebrow: "Signal",
+  headline: "Did this path make the game clear?",
+  body: "Your signal helps us improve the welcome before Humanity opens broadly.",
+  cta: "Continue",
+}
+
+export const reminder = {
+  eyebrow: "Cadence",
+  headline: "Return when people gather",
+  body: "Humanity is a meeting practice, not a feed. Allow a reminder for faction meetings, registration windows, and your trial deadline if you choose membership.",
+  allow: "Allow reminders",
+  later: "Not now",
+}
+
 export const access = {
   eyebrow: "Access",
   headline: "Choose how you enter",
@@ -166,4 +215,28 @@ export const identity = {
   headline: "Choose a way back in",
   body: "This preview stores only your onboarding choices in this browser. Real Google, Microsoft, and XPR authentication will be connected later.",
   methods: ["Google", "Microsoft", "XPR"],
+}
+
+export const invite = {
+  pair: {
+    eyebrow: "Bond",
+    headline: "Bring one person for life",
+    body: "The yearly path creates one lifetime pair. As long as either person has an active membership, both can participate when faction rules allow.",
+    hint: "The live product will bind this code after payment and identity verification.",
+  },
+  circle: {
+    eyebrow: "Popular",
+    headline: "Open a circle of 100",
+    body: "Popular access creates a shared circle. One active payer keeps up to 100 people in member access.",
+    hint: "Another circle member can take over payment if the current payer stops.",
+  },
+  blocked: {
+    eyebrow: "Monthly",
+    headline: "Enter without a bond",
+    body: "Monthly membership includes a 7-day trial and participation tools, but it does not create a lifetime pair.",
+    hint: "You can move to yearly or Popular later.",
+  },
+  copy: "Copy preview code",
+  copied: "Copied",
+  cta: "Choose an account",
 }

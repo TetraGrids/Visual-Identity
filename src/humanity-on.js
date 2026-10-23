@@ -6,8 +6,23 @@ import markSvg from "../brand/geometry/tetrahedron-g.svg?raw"
 import templeUrl from "./on/media/delphi-temple-field.png"
 import * as copy from "./on/humanity-copy.js"
 
-const BASE = ["welcome", "system", "democracy", "americas", "humanity", "faction", "alignment", "access"]
+const BASE = [
+  "welcome",
+  "system",
+  "democracy",
+  "americas",
+  "humanity",
+  "faction",
+  "alignment",
+  "token",
+  "assembly",
+  "commitment",
+  "rating",
+  "reminder",
+  "access",
+]
 const PAY = ["pay_prime", "pay_remind", "pay_buy"]
+const OUTCOMES = ["invite_pair", "invite_circle", "invite_blocked"]
 const END = ["identity", "complete"]
 
 function esc(value) {
@@ -24,6 +39,10 @@ function fresh() {
     answers: {},
     faction: "",
     alignment: [],
+    tokenAccepted: false,
+    commitment: "",
+    rating: 0,
+    reminder: "",
     access: "",
     plan: "yearly",
     popularOpen: false,
@@ -49,11 +68,17 @@ function save() {
 
 function journey() {
   if (state.returning) return ["welcome", "identity", "complete"]
-  return state.access === "member" ? [...BASE, ...PAY, ...END] : [...BASE, ...END]
+  return state.access === "member" ? [...BASE, ...PAY, membershipOutcome(), ...END] : [...BASE, ...END]
+}
+
+function membershipOutcome() {
+  if (state.plan === "yearly") return "invite_pair"
+  if (state.plan.startsWith("popular")) return "invite_circle"
+  return "invite_blocked"
 }
 
 function previous() {
-  if (state.step === "identity") return state.returning ? "welcome" : state.access === "member" ? "pay_buy" : "access"
+  if (state.step === "identity") return state.returning ? "welcome" : state.access === "member" ? membershipOutcome() : "access"
   const index = journey().indexOf(state.step)
   return index > 0 ? journey()[index - 1] : null
 }
@@ -63,7 +88,11 @@ function next() {
     return state.answers[state.step] ? journey()[journey().indexOf(state.step) + 1] : null
   }
   if (state.step === "faction") return state.faction ? "alignment" : null
-  if (state.step === "alignment") return state.alignment.length === copy.alignment.checks.length ? "access" : null
+  if (state.step === "alignment") return state.alignment.length === copy.alignment.checks.length ? "token" : null
+  if (state.step === "token") return state.tokenAccepted ? "assembly" : null
+  if (state.step === "commitment") return state.commitment ? "rating" : null
+  if (state.step === "rating") return state.rating ? "reminder" : null
+  if (state.step === "reminder") return state.reminder ? "access" : null
   if (state.step === "access") return state.access === "member" ? "pay_prime" : state.access === "free" ? "identity" : null
   if (state.step === "identity") return state.auth ? "complete" : null
   const index = journey().indexOf(state.step)
@@ -107,7 +136,7 @@ function choices(items, selected, name) {
   return `<div class="on-choices humanity-choices">${items
     .map(
       (label) =>
-        `<button class="on-choice${selected === label ? " is-on" : ""}" type="button" data-${name}="${esc(label)}">${esc(label)}</button>`,
+        `<button class="on-choice${selected === label ? " is-on" : ""}" type="button" data-${name}="${esc(label)}" aria-pressed="${selected === label}">${esc(label)}</button>`,
     )
     .join("")}</div>`
 }
@@ -202,6 +231,73 @@ function alignment() {
   </section>`
 }
 
+function token() {
+  return `<section class="on-screen">
+    ${chrome(copy.token.eyebrow)}
+    <h1>${esc(copy.token.headline)}</h1>
+    <p class="on-body">${esc(copy.token.body)}</p>
+    <p class="humanity-token-rule">${esc(copy.token.rule)}</p>
+    <ul class="humanity-token-list">${copy.token.checks.map((item) => `<li>${esc(item)}</li>`).join("")}</ul>
+    <div class="on-foot">
+      <button class="tetra-btn tetra-btn--primary" type="button" data-token>${esc(copy.token.cta)}</button>
+    </div>
+  </section>`
+}
+
+function assembly() {
+  return `<section class="on-screen">
+    ${chrome(copy.assembly.eyebrow)}
+    <h1>${esc(copy.assembly.headline)}</h1>
+    <div class="humanity-assembly" aria-hidden="true">${markSvg}</div>
+    <div class="humanity-path">${copy.assembly.lines
+      .map(
+        ({ id, label }) => `<p>
+          <span>${esc(label)}</span>
+          <strong>${esc(id === "faction" ? state.faction : id === "token" ? "One person · one vote" : state.answers[id])}</strong>
+        </p>`,
+      )
+      .join("")}</div>
+    ${foot(copy.assembly.cta)}
+  </section>`
+}
+
+function commitment() {
+  return `<section class="on-screen">
+    ${chrome(copy.commitment.eyebrow)}
+    <h1>${esc(copy.commitment.headline)}</h1>
+    <p class="on-body">${esc(copy.commitment.body)}</p>
+    ${choices(copy.commitment.choices, state.commitment, "commit")}
+    ${state.commitment ? foot(copy.commitment.cta) : ""}
+  </section>`
+}
+
+function rating() {
+  return `<section class="on-screen">
+    ${chrome(copy.rating.eyebrow)}
+    <h1>${esc(copy.rating.headline)}</h1>
+    <p class="on-body">${esc(copy.rating.body)}</p>
+    <div class="on-stars">${[1, 2, 3, 4, 5]
+      .map(
+        (value) =>
+          `<button class="on-star${state.rating >= value ? " is-on" : ""}" type="button" data-rate="${value}" aria-label="${value} out of 5" aria-pressed="${state.rating === value}">${markSvg}</button>`,
+      )
+      .join("")}</div>
+    ${state.rating ? foot(copy.rating.cta) : ""}
+  </section>`
+}
+
+function reminder() {
+  return `<section class="on-screen">
+    ${chrome(copy.reminder.eyebrow)}
+    <h1>${esc(copy.reminder.headline)}</h1>
+    <p class="on-body">${esc(copy.reminder.body)}</p>
+    <div class="on-foot">
+      <button class="tetra-btn tetra-btn--primary" type="button" data-reminder="allow">${esc(copy.reminder.allow)}</button>
+      <button class="on-quiet" type="button" data-reminder="later">${esc(copy.reminder.later)}</button>
+    </div>
+  </section>`
+}
+
 function access() {
   return `<section class="on-screen">
     ${chrome(copy.access.eyebrow)}
@@ -244,7 +340,7 @@ function remind() {
 }
 
 function plan(plan) {
-  return `<button class="on-plan${state.plan === plan.id ? " is-on" : ""}" type="button" data-plan="${esc(plan.id)}">
+  return `<button class="on-plan${state.plan === plan.id ? " is-on" : ""}" type="button" data-plan="${esc(plan.id)}" aria-pressed="${state.plan === plan.id}">
     <div class="on-plan__row"><span class="on-plan__name">${esc(plan.name)}</span><span class="on-plan__price">${esc(plan.price)}</span></div>
     <p class="on-plan__badge">${esc(plan.badge)}</p>
     <p class="on-plan__fine">${esc(plan.fine)}</p>
@@ -263,6 +359,22 @@ function buy() {
         : `<button class="on-quiet" type="button" data-popular>${esc(copy.pay.buy.popularLink)}</button>`
     }
     ${foot(copy.pay.buy.cta, '<button class="on-quiet" type="button" data-free>Continue as a free spectator</button>')}
+  </section>`
+}
+
+function invite(kind) {
+  return `<section class="on-screen">
+    ${chrome(copy.invite[kind].eyebrow)}
+    <h1>${esc(copy.invite[kind].headline)}</h1>
+    <p class="on-body">${esc(copy.invite[kind].body)}</p>
+    <p class="on-fine">${esc(copy.invite[kind].hint)}</p>
+    ${
+      kind === "blocked"
+        ? ""
+        : `<p class="on-code">${esc(state.code)}</p>
+           <button class="on-quiet" type="button" data-copy>${esc(copy.invite.copy)}</button>`
+    }
+    ${foot(copy.invite.cta)}
   </section>`
 }
 
@@ -330,10 +442,18 @@ function view() {
   if (state.step === "humanity") return humanity()
   if (state.step === "faction") return faction()
   if (state.step === "alignment") return alignment()
+  if (state.step === "token") return token()
+  if (state.step === "assembly") return assembly()
+  if (state.step === "commitment") return commitment()
+  if (state.step === "rating") return rating()
+  if (state.step === "reminder") return reminder()
   if (state.step === "access") return access()
   if (state.step === "pay_prime") return prime()
   if (state.step === "pay_remind") return remind()
   if (state.step === "pay_buy") return buy()
+  if (state.step === "invite_pair") return invite("pair")
+  if (state.step === "invite_circle") return invite("circle")
+  if (state.step === "invite_blocked") return invite("blocked")
   if (state.step === "identity") return identity()
   if (state.step === "complete") return complete()
   return welcome()
@@ -375,6 +495,10 @@ function advance() {
   if (next()) go(next())
   else if (copy.confirmations.some(({ id }) => id === state.step)) toast("Choose the path that is true for you.")
   else if (state.step === "alignment") toast("Confirm each FALA alignment.")
+  else if (state.step === "token") toast("Confirm how the token is used.")
+  else if (state.step === "commitment") toast("Choose your first action.")
+  else if (state.step === "rating") toast("Give the path a signal.")
+  else if (state.step === "reminder") toast("Choose whether to receive reminders.")
   else if (state.step === "access") toast("Choose spectator or member access.")
   else if (state.step === "identity") toast("Choose an account method.")
 }
@@ -418,6 +542,12 @@ function bind(root) {
       go("identity")
       return
     }
+    if (event.target.closest("[data-token]")) {
+      state.tokenAccepted = true
+      save()
+      go("assembly")
+      return
+    }
     const answer = event.target.closest("[data-answer]")
     if (answer) {
       state.answers[state.step] = answer.dataset.answer
@@ -429,6 +559,27 @@ function bind(root) {
       state.faction = "FALA"
       save()
       render()
+      return
+    }
+    const commitment = event.target.closest("[data-commit]")
+    if (commitment) {
+      state.commitment = commitment.dataset.commit
+      save()
+      render()
+      return
+    }
+    const rating = event.target.closest("[data-rate]")
+    if (rating) {
+      state.rating = Number(rating.dataset.rate)
+      save()
+      render()
+      return
+    }
+    const reminder = event.target.closest("[data-reminder]")
+    if (reminder) {
+      state.reminder = reminder.dataset.reminder
+      save()
+      go("access")
       return
     }
     const access = event.target.closest("[data-access]")
@@ -459,6 +610,12 @@ function bind(root) {
       render()
       return
     }
+    const copyCode = event.target.closest("[data-copy]")
+    if (copyCode) {
+      navigator.clipboard?.writeText(state.code).catch(() => {})
+      copyCode.textContent = copy.invite.copied
+      return
+    }
     const auth = event.target.closest("[data-auth]")
     if (auth) {
       // TODO(auth): replace local selection with Google, Microsoft, and Wharfkit/WebAuth XPR sessions.
@@ -483,7 +640,7 @@ function render() {
 
 function applyHash() {
   const step = location.hash.replace(/^#\/?/, "")
-  if ([...BASE, ...PAY, ...END].includes(step)) state.step = step
+  if ([...BASE, ...PAY, ...OUTCOMES, ...END].includes(step)) state.step = step
 }
 
 // TODO(billing): connect plans to the shared entitlement service before any charge.
