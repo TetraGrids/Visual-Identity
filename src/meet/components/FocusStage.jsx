@@ -2,23 +2,33 @@ import React from "react"
 import { openCameraTrack, paintLook } from "../lib/look.js"
 
 /**
- * Main video plane for the focused speaker.
- * Demo mode: letter/avatar full-bleed. LiveKit video mounts behind when connected.
- * Others crowd as circles bottom-right over the speaker (unless screen share —
- * then the presenter's cam is a top-left PiP circle).
+ * The presenter picture (camera, or the share while sharing) keeps its own shape
+ * and takes the largest rect the well can give it. Everyone else sits in the
+ * leftover, at the camera's shape, and that strip scrolls when they do not fit.
+ * During a share, the presenter's camera is a circle in the top-right corner.
  */
-export function StreamVideo({ stream }) {
+export function StreamVideo({ stream, onRatio }) {
   const node = React.useRef(null)
+  const ratio = React.useRef(onRatio)
+  ratio.current = onRatio
   React.useEffect(() => {
     const v = node.current
     if (!v) return
+    const read = () => {
+      if (v.videoWidth) ratio.current?.(v.videoWidth / v.videoHeight)
+    }
     v.muted = !stream?.getAudioTracks().length
     v.srcObject = stream || null
+    v.addEventListener("loadedmetadata", read)
+    v.addEventListener("resize", read)
     if (stream) {
       const playing = v.play()
       if (playing) playing.catch(() => {})
+      read()
     }
     return () => {
+      v.removeEventListener("loadedmetadata", read)
+      v.removeEventListener("resize", read)
       v.srcObject = null
     }
   }, [stream])
@@ -35,63 +45,174 @@ export function FocusStage({
   shareStream,
   children, // live video layer
 }) {
+  const well = React.useRef(null)
+  const ratio = React.useRef(16 / 9)
+  const camRatio = React.useRef(16 / 9)
+  const [fit, setFit] = React.useState(null)
   const self = speaker?.id === localId && localStream
+
+  function measure() {
+    const node = well.current
+    if (!node) return
+    const rect = node.getBoundingClientRect()
+    const a = ratio.current || 16 / 9
+    const wide = rect.width / Math.max(rect.height, 1) > a
+    const mainW = wide ? rect.height * a : rect.width
+    const mainH = wide ? rect.height : rect.width / a
+    const gap = Math.max(0, wide ? rect.width - mainW : rect.height - mainH)
+    const stack = wide ? "x" : "y"
+    const n = others.length
+    const cam = camRatio.current || 16 / 9
+    const boxW = Math.max(0, (stack === "x" ? gap : mainW) - 16)
+    const boxH = Math.max(0, (stack === "x" ? mainH : gap) - 16)
+    let cols = 1
+    let rows = n
+    let tileW = 0
+    let tileH = 0
+    if (!preview && !children && n && boxW >= 56 && boxH >= 40) {
+      for (let c = 1; c <= n; c++) {
+        const r = Math.ceil(n / c)
+        const cw = (boxW - 8 * (c - 1)) / c
+        const ch = (boxH - 8 * (r - 1)) / r
+        const tw = Math.min(Math.max(cw, 0), Math.max(ch, 0) * cam)
+        const th = tw / cam
+        if (th >= 36 && tw * th > tileW * tileH) {
+          cols = c
+          rows = r
+          tileW = tw
+          tileH = th
+        }
+      }
+      const usedH = rows * tileH + 8 * (rows - 1)
+      const usedW = cols * tileW + 8 * (cols - 1)
+      if (!tileW || usedH > boxH + 1 || usedW > boxW + 1) {
+        tileH = Math.min(boxH, 112)
+        tileW = tileH * cam
+        if (tileW > boxW) {
+          tileW = boxW
+          tileH = tileW / cam
+        }
+        if (stack === "x") {
+          cols = 1
+          rows = n
+        } else {
+          rows = 1
+          cols = n
+        }
+      }
+    }
+    setFit({
+      mainW,
+      mainH,
+      gap,
+      stack,
+      show: !preview && !children && n > 0 && tileW >= 56 && tileH >= 32,
+      cols,
+      rows,
+      tileW,
+      tileH,
+    })
+  }
+
+  React.useEffect(() => {
+    measure()
+    const obs = new ResizeObserver(measure)
+    if (well.current) obs.observe(well.current)
+    return () => obs.disconnect()
+  }, [others.length, preview, screenShare, !!children])
+
+  function onRatio(next) {
+    if (!next || Math.abs(next - ratio.current) < 0.02) return
+    ratio.current = next
+    measure()
+  }
+
+  function onCam(next) {
+    if (!next || Math.abs(next - camRatio.current) < 0.02) return
+    camRatio.current = next
+    if (!screenShare) ratio.current = next
+    measure()
+  }
+
+  const picture = children ? (
+    children
+  ) : screenShare && shareStream ? (
+    <StreamVideo stream={shareStream} onRatio={onRatio} />
+  ) : self ? (
+    <StreamVideo stream={localStream} onRatio={onCam} />
+  ) : speaker?.avatarUrl ? (
+    <img src={speaker.avatarUrl} alt="" className="meet-focus__full" />
+  ) : speaker?.letter ? (
+    <span className="meet-focus__letter">{speaker.letter}</span>
+  ) : null
+
   return (
-    <div className="meet-focus">
-      <div className="meet-focus__video">
-        {children}
-        {!children && !preview && (
-          <div className="meet-focus__placeholder" aria-hidden={false}>
-            {self ? (
-              <StreamVideo stream={localStream} />
-            ) : speaker?.avatarUrl ? (
-              <img src={speaker.avatarUrl} alt="" className="meet-focus__full" />
-            ) : (
-              <span className="meet-focus__letter">{speaker?.letter || "?"}</span>
-            )}
+    <div className="meet-focus" ref={well}>
+      <div
+        className={`meet-fit${fit?.show ? " is-split" : ""}`}
+        data-stack={fit?.show ? fit.stack : "x"}
+      >
+        <div
+          className="meet-fit__main"
+          style={fit ? { width: fit.mainW, height: fit.mainH } : undefined}
+        >
+          {children && <div className="meet-focus__video">{children}</div>}
+          {!children && screenShare && (
+            <div className="meet-focus__screenshare">
+              {shareStream ? picture : <div className="meet-focus__screenshare-frame">Screen share</div>}
+            </div>
+          )}
+          {!children && !screenShare && !preview && picture && (
+            <div className="meet-focus__placeholder">{picture}</div>
+          )}
+          {!screenShare && !children && !preview && (
             <span className="meet-focus__name">{speaker?.name || "Waiting"}</span>
-          </div>
-        )}
-        {screenShare && (
-          <div className="meet-focus__screenshare" aria-label="Screen share">
-            {shareStream ? (
-              <StreamVideo stream={shareStream} />
-            ) : (
-              <div className="meet-focus__screenshare-frame">Screen share</div>
-            )}
+          )}
+          {screenShare && speaker && (
+            <div className="meet-focus__pip" title={speaker.name}>
+              <span className="meet-focus__pip-face">
+                {self ? (
+                  <StreamVideo stream={localStream} onRatio={onCam} />
+                ) : speaker?.avatarUrl ? (
+                  <img src={speaker.avatarUrl} alt="" />
+                ) : (
+                  speaker?.letter || ""
+                )}
+              </span>
+            </div>
+          )}
+        </div>
+        {fit?.show && (
+          <div
+            className="meet-fit__rail"
+            style={{
+              gridTemplateColumns: `repeat(${fit.cols}, ${fit.tileW}px)`,
+              gridTemplateRows: `repeat(${fit.rows}, ${fit.tileH}px)`,
+              width: fit.stack === "x" ? fit.gap : fit.mainW,
+              height: fit.stack === "x" ? fit.mainH : fit.gap,
+            }}
+            aria-label="Other participants"
+          >
+            {others.map((p) => (
+              <div key={p.id} className={`meet-tile${p.id === localId ? " is-local" : ""}`} title={p.name}>
+                {p.id === localId && localStream ? (
+                  <StreamVideo stream={localStream} onRatio={onCam} />
+                ) : p.avatarUrl ? (
+                  <img src={p.avatarUrl} alt="" />
+                ) : (
+                  <span>{p.letter || ""}</span>
+                )}
+                <span className="meet-tile__name">{p.name}</span>
+              </div>
+            ))}
           </div>
         )}
       </div>
-
-      {screenShare && speaker && (
-        <div className="meet-focus__pip" title={speaker.name}>
-          <span className="meet-focus__pip-face">
-            {self ? (
-              <StreamVideo stream={localStream} />
-            ) : speaker.avatarUrl ? (
-              <img src={speaker.avatarUrl} alt="" />
-            ) : (
-              speaker.letter || "?"
-            )}
-          </span>
-          <span className="meet-focus__pip-label">{speaker.name}</span>
-        </div>
-      )}
-
-      {!screenShare && others.length > 0 && (
-        <div className="meet-focus__crowd" aria-label="Other participants">
-          {others.map((p) => (
-            <div key={p.id} className="meet-focus__crowd-node" title={p.name}>
-              {p.avatarUrl ? <img src={p.avatarUrl} alt="" /> : p.letter || "?"}
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
 
-/** Square self-view. The dashed circle is the crop the round bubble shows. */
+/** Full camera frame at the device's own shape. The dashed circle is the round bubble's crop. */
 export function WaitingPreview({ camera, look, onStream }) {
   const videoRef = React.useRef(null)
   const trackRef = React.useRef(null)
@@ -108,6 +229,15 @@ export function WaitingPreview({ camera, look, onStream }) {
     if (node) {
       node.muted = true
       node.srcObject = stream
+      const frame = () => {
+        if (!node.videoWidth || !node.parentElement) return
+        const shape = node.videoWidth / node.videoHeight
+        node.parentElement.style.aspectRatio = `${node.videoWidth} / ${node.videoHeight}`
+        node.parentElement.style.width = `min(100%, calc(42vh * ${shape}))`
+        node.parentElement.style.height = "auto"
+      }
+      node.onloadedmetadata = frame
+      frame()
       const playing = node.play()
       if (playing) playing.catch(() => {})
     }

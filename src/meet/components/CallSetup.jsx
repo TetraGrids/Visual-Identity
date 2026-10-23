@@ -147,7 +147,7 @@ export function CallSetup({ look, onLook, devices = true }) {
           </label>
           <button
             type="button"
-            className="tetra-btn"
+            className="tetra-btn meet-btn"
             aria-pressed={look.videoEnabled !== false}
             onClick={() => onLook({ ...look, videoEnabled: look.videoEnabled === false })}
           >
@@ -169,7 +169,7 @@ export function CallSetup({ look, onLook, devices = true }) {
           </label>
           <button
             type="button"
-            className="tetra-btn"
+            className="tetra-btn meet-btn"
             aria-pressed={look.audioEnabled !== false}
             onClick={() => onLook({ ...look, audioEnabled: look.audioEnabled === false })}
           >
@@ -216,7 +216,7 @@ export function CallSetup({ look, onLook, devices = true }) {
           <button
             key={id}
             type="button"
-            className="meet-setup__chip"
+            className="meet-setup__chip meet-btn"
             aria-pressed={look.background === id}
             onClick={() => choose(id)}
           >
@@ -227,7 +227,7 @@ export function CallSetup({ look, onLook, devices = true }) {
           <button
             key={item.background}
             type="button"
-            className="meet-setup__chip"
+            className="meet-setup__chip meet-btn"
             aria-pressed={look.background === item.background}
             onClick={() => choose(item.background)}
           >
@@ -243,13 +243,13 @@ export function CallSetup({ look, onLook, devices = true }) {
           placeholder="https:// image URL"
           inputMode="url"
         />
-        <button type="button" className="tetra-btn" onClick={useUrl}>
+        <button type="button" className="tetra-btn meet-btn" onClick={useUrl}>
           Use URL
         </button>
-        <button type="button" className="tetra-btn" onClick={() => fromGoogle("drive")}>
+        <button type="button" className="tetra-btn meet-btn" onClick={() => fromGoogle("drive")}>
           Drive
         </button>
-        <button type="button" className="tetra-btn" onClick={() => fromGoogle("photos")}>
+        <button type="button" className="tetra-btn meet-btn" onClick={() => fromGoogle("photos")}>
           Photos
         </button>
       </div>

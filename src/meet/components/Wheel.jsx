@@ -3,13 +3,14 @@ import { SLOT_COUNT, slotAngle } from "../state/machine.js"
 import { SpeakerRing } from "./SpeakerRing.jsx"
 import { StreamVideo } from "./FocusStage.jsx"
 
-const RING = 38 // % radius of overlay
+const RX = 36 // % of width — keeps the eight slots apart
+const RY = 26 // % of height — spreads the bottom slots clear of the speaker ring
 
 function slotXY(slotIndex) {
   const a = slotAngle(slotIndex)
   return {
-    x: 50 + RING * Math.cos(a),
-    y: 50 + RING * Math.sin(a),
+    x: 50 + RX * Math.cos(a),
+    y: 50 + RY * Math.sin(a),
   }
 }
 
@@ -157,7 +158,7 @@ export function Wheel({
               ) : p?.avatarUrl ? (
                 <img src={p.avatarUrl} alt="" draggable={false} />
               ) : (
-                p?.letter || "?"
+                p?.letter || ""
               )}
             </span>
             <span className="meet-wheel__label">{p?.name}</span>

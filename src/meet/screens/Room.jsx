@@ -294,10 +294,10 @@ export function Room({ meetingId }) {
   return (
     <div className="meet-room" data-bar-hidden={barHidden ? "true" : "false"}>
       <div className="meet-room__stage" onClick={closePanel}>
+        <div className="meet-room__picture">
         <FocusStage
           speaker={speaker}
-          /* Crowd over speaker when live video is up; demo uses the bottom wheel alone */
-          others={showLiveKit && showPresentations ? others : []}
+          others={showPresentations ? others : []}
           screenShare={screenShare}
           localId={local?.id}
           localStream={localStream}
@@ -429,61 +429,7 @@ export function Room({ meetingId }) {
             </div>
           )}
 
-          {showPresentations && (
-            <>
-              <div className="meet-wheel-dock">
-                <Wheel
-                  slots={state.slots}
-                  participants={groupParticipants}
-                  speakerId={state.speakerId}
-                  localId={local?.id}
-                  localStream={localStream}
-                  speakerStartedAt={state.speakerStartedAt}
-                  now={now}
-                  onClaimActive={(id) => {
-                    dispatch({ type: "CLAIM_ACTIVE", participantId: id, now: Date.now() })
-                    dispatch({
-                      type: "NOTIFY",
-                      text: `${byName(state, id)} → active`,
-                      now: Date.now(),
-                    })
-                  }}
-                  onMoveSlot={(id, toSlot) =>
-                    dispatch({ type: "MOVE_SLOT", participantId: id, toSlot })
-                  }
-                />
-              </div>
-              <div className="meet-overlay meet-overlay--actions">
-                <DoneButton
-                  visible={state.speakerId === local?.id && state.phase === PHASES.PRESENTATIONS}
-                  armed={state.doneArmed}
-                  onClick={() =>
-                    dispatch({
-                      type: "DONE_PRESENTING",
-                      participantId: local?.id,
-                      now: Date.now(),
-                    })
-                  }
-                />
-                <button type="button" className="tetra-btn" onClick={shareScreen}>
-                  {screenShare ? "Stop sharing" : "Share screen"}
-                </button>
-                <button type="button" className="tetra-btn" onClick={() => setEffects((open) => !open)}>
-                  {effects ? "Hide effects" : "Effects & devices"}
-                </button>
-                <button
-                  type="button"
-                  className="tetra-btn"
-                  onClick={() =>
-                    dispatch({ type: "FORCE_PHASE", phase: PHASES.DISCERNMENT, now: Date.now() })
-                  }
-                >
-                  Demo: skip to discernment
-                </button>
-              </div>
-              <TransitionClock endsAt={state.transitionEndsAt} now={now} />
-            </>
-          )}
+          {showPresentations && <TransitionClock endsAt={state.transitionEndsAt} now={now} />}
 
           {showDiscernment && (
             <ConsensusVote
@@ -605,6 +551,31 @@ export function Room({ meetingId }) {
             </div>
           )}
         </div>
+        </div>
+        {showPresentations && (
+          <div className="meet-wheel-dock">
+            <Wheel
+              slots={state.slots}
+              participants={groupParticipants}
+              speakerId={state.speakerId}
+              localId={local?.id}
+              localStream={localStream}
+              speakerStartedAt={state.speakerStartedAt}
+              now={now}
+              onClaimActive={(id) => {
+                dispatch({ type: "CLAIM_ACTIVE", participantId: id, now: Date.now() })
+                dispatch({
+                  type: "NOTIFY",
+                  text: `${byName(state, id)} → active`,
+                  now: Date.now(),
+                })
+              }}
+              onMoveSlot={(id, toSlot) =>
+                dispatch({ type: "MOVE_SLOT", participantId: id, toSlot })
+              }
+            />
+          </div>
+        )}
       </div>
 
       <button
@@ -651,9 +622,49 @@ export function Room({ meetingId }) {
               <span>{(localName || "U").charAt(0).toUpperCase()}</span>
             )}
           </button>
+          {showPresentations && (
+            <>
+              <DoneButton
+                visible={state.speakerId === local?.id && state.phase === PHASES.PRESENTATIONS}
+                armed={state.doneArmed}
+                onClick={() =>
+                  dispatch({
+                    type: "DONE_PRESENTING",
+                    participantId: local?.id,
+                    now: Date.now(),
+                  })
+                }
+              />
+              <button
+                type="button"
+                className="tetra-btn meet-btn"
+                aria-pressed={screenShare}
+                onClick={shareScreen}
+              >
+                {screenShare ? "Stop sharing" : "Share screen"}
+              </button>
+              <button
+                type="button"
+                className="tetra-btn meet-btn"
+                aria-pressed={effects}
+                onClick={() => setEffects((open) => !open)}
+              >
+                {effects ? "Hide effects" : "Effects"}
+              </button>
+              <button
+                type="button"
+                className="tetra-btn meet-btn"
+                onClick={() =>
+                  dispatch({ type: "FORCE_PHASE", phase: PHASES.DISCERNMENT, now: Date.now() })
+                }
+              >
+                Skip to vote
+              </button>
+            </>
+          )}
           <button
             type="button"
-            className={`tetra-btn${panelTab === "chat" ? " is-dock-active" : ""}`}
+            className={`tetra-btn meet-btn${panelTab === "chat" ? " is-dock-active" : ""}`}
             aria-pressed={panelTab === "chat"}
             onClick={() => togglePanel("chat")}
           >
@@ -661,7 +672,7 @@ export function Room({ meetingId }) {
           </button>
           <button
             type="button"
-            className={`tetra-btn${panelTab === "candidates" ? " is-dock-active" : ""}`}
+            className={`tetra-btn meet-btn${panelTab === "candidates" ? " is-dock-active" : ""}`}
             aria-pressed={panelTab === "candidates"}
             onClick={() => togglePanel("candidates")}
           >
@@ -669,13 +680,13 @@ export function Room({ meetingId }) {
           </button>
           <button
             type="button"
-            className={`tetra-btn${panelTab === "proofs" ? " is-dock-active" : ""}`}
+            className={`tetra-btn meet-btn${panelTab === "proofs" ? " is-dock-active" : ""}`}
             aria-pressed={panelTab === "proofs"}
             onClick={() => togglePanel("proofs")}
           >
             Proofs
           </button>
-          <button type="button" className="tetra-btn" onClick={leave}>
+          <button type="button" className="tetra-btn meet-btn" onClick={leave}>
             Leave
           </button>
         </div>

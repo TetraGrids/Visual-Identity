@@ -1,9 +1,10 @@
 /**
  * Camera look for the pre-join screen and the room.
- * Backgrounds use @livekit/track-processors (MediaPipe). We store URLs and
- * Drive file ids only — image bytes stay with the user or Google.
+ * Backgrounds use a small MediaPipe mask on a worker (see cutout.js).
+ * We store URLs and Drive file ids only — image bytes stay with the user or Google.
  */
 import { createLocalAudioTrack, createLocalVideoTrack } from "livekit-client"
+import { cutoutProcessor } from "./cutout.js"
 
 const LOOK_KEY = "tetra-meet-look"
 const WALL_KEY = "tetra-meet-wall"
@@ -132,15 +133,15 @@ export async function paintLook(track, background) {
     if (processor?.switchTo) await processor.switchTo({ mode: "disabled" })
     return
   }
-  const { BackgroundProcessor } = await import("@livekit/track-processors")
-  if (background === "blur") {
-    if (processor?.switchTo) await processor.switchTo({ mode: "background-blur", blurRadius: 10 })
-    else await track.setProcessor(BackgroundProcessor({ mode: "background-blur", blurRadius: 10 }))
-    return
+  const next =
+    background === "blur"
+      ? { mode: "background-blur", blurRadius: 10 }
+      : { mode: "virtual-background", imagePath: await imagePath(background) }
+  if (processor?.name === "tetra-cutout") await processor.switchTo(next)
+  else {
+    if (processor && track.stopProcessor) await track.stopProcessor()
+    await track.setProcessor(cutoutProcessor(next))
   }
-  const image = await imagePath(background)
-  if (processor?.switchTo) await processor.switchTo({ mode: "virtual-background", imagePath: image })
-  else await track.setProcessor(BackgroundProcessor({ mode: "virtual-background", imagePath: image }))
 }
 
 function script(src) {

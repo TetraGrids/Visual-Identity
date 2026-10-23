@@ -424,6 +424,37 @@
   border-radius: 0;
   padding: 8px 12px;
   cursor: pointer;
+  opacity: 0.38;
+}
+
+.meet-setup__chip:hover,
+.meet-setup .tetra-btn:hover,
+.meet-overlay--actions .tetra-btn:hover {
+  opacity: 0.62;
+}
+
+.meet-setup__chip:active,
+.meet-setup .tetra-btn:active,
+.meet-overlay--actions .tetra-btn:active,
+.meet-setup__chip[aria-pressed="true"],
+.meet-setup .tetra-btn[aria-pressed="true"],
+.meet-overlay--actions .tetra-btn[aria-pressed="true"] {
+  opacity: 1;
+}
+
+.meet-setup .tetra-btn,
+.meet-overlay--actions .tetra-btn,
+.meet-btn {
+  opacity: 0.38;
+}
+
+.meet-btn:hover {
+  opacity: 0.62;
+}
+
+.meet-btn:active,
+.meet-btn[aria-pressed="true"] {
+  opacity: 1;
 }
 
 .meet-setup__chip[aria-pressed="true"] {
@@ -479,8 +510,19 @@
 .meet-room__stage {
   position: relative;
   min-height: 0;
-  height: 100%;
   display: grid;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.meet-room__stage:has(.meet-wheel-dock) {
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.meet-room__picture {
+  position: relative;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
 }
 
 .meet-room__hud {
@@ -535,12 +577,91 @@
   max-width: 280px;
 }
 
-/* Focus / main video plane */
+/* Focus / main video plane. The picture uses its own aspect; leftover space holds the others. */
 .meet-focus {
   position: absolute;
   inset: 0;
   background: var(--tetra-void);
   overflow: hidden;
+}
+
+.meet-fit {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.meet-fit[data-stack="y"] {
+  flex-direction: column;
+}
+
+.meet-fit__main {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+}
+
+.meet-fit.is-split {
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.meet-fit.is-split .meet-fit__main {
+  flex: 0 0 auto;
+}
+
+.meet-fit__rail {
+  display: grid;
+  gap: 8px;
+  flex: 0 0 auto;
+  align-content: center;
+  justify-content: center;
+  align-self: center;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+  box-sizing: border-box;
+  padding: 8px;
+}
+
+.meet-fit[data-stack="y"] .meet-fit__rail {
+  justify-content: center;
+}
+
+.meet-tile {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  background: var(--tetra-void-panel);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+}
+
+.meet-tile img,
+.meet-tile video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.meet-tile.is-local video {
+  transform: scaleX(-1);
+}
+
+.meet-tile__name {
+  position: absolute;
+  left: 6px;
+  bottom: 4px;
+  font-size: 0.6rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--tetra-ink);
+  text-shadow: 0 1px 4px #050705;
 }
 
 .meet-focus__video {
@@ -569,6 +690,12 @@
 
 .meet-focus__full,
 .meet-focus__placeholder video,
+.meet-focus__screenshare video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
 .meet-focus__pip-face video {
   width: 100%;
   height: 100%;
@@ -592,8 +719,9 @@
 
 .meet-wait {
   position: relative;
-  width: min(100%, 46vh, 420px);
-  aspect-ratio: 1;
+  width: min(100%, calc(42vh * 16 / 9));
+  height: auto;
+  aspect-ratio: 16 / 9;
   margin: 0 auto 12px;
   background: var(--tetra-void-panel);
 }
@@ -603,17 +731,24 @@
   inset: 0;
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   transform: scaleX(-1);
   background: transparent;
 }
 
 .meet-wait__crop {
   position: absolute;
-  inset: 0;
+  left: 50%;
+  top: 50%;
+  width: auto;
+  height: 100%;
+  aspect-ratio: 1;
+  max-width: 100%;
+  transform: translate(-50%, -50%);
   border: 1.5px dashed rgba(244, 247, 244, 0.75);
   border-radius: 50%;
   pointer-events: none;
+  box-sizing: border-box;
   z-index: 1;
 }
 
@@ -639,13 +774,14 @@
 
 .meet-focus__name {
   position: absolute;
-  top: 18%;
+  bottom: 10px;
   left: 50%;
   transform: translateX(-50%);
   font-size: 0.85rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--tetra-ink-dim);
+  text-shadow: 0 1px 4px #050705;
 }
 
 .meet-focus__screenshare {
@@ -658,8 +794,8 @@
 }
 
 .meet-focus__screenshare-frame {
-  width: min(90%, 960px);
-  aspect-ratio: 16 / 9;
+  width: 100%;
+  height: 100%;
   border: 1px solid var(--tetra-glass-border);
   display: grid;
   place-items: center;
@@ -671,28 +807,23 @@
 .meet-focus__screenshare video {
   position: absolute;
   inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
   background: var(--tetra-void);
 }
 
-/* Presenter cam PiP when screen sharing */
+/* Presenter cam is a circle in the top-right corner of the shared picture. */
 .meet-focus__pip {
   position: absolute;
-  top: 16px;
-  left: 16px;
+  top: 8px;
+  right: 8px;
   z-index: 3;
-  width: 88px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 4px;
-  /* below stage clock when both — offset if needed */
-  margin-top: 72px;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
 }
 
 .meet-focus__pip-face {
+  position: relative;
   width: 72px;
   height: 72px;
   display: grid;
@@ -780,15 +911,13 @@
   }
 }
 
-/* Bottom wheel overlay — max 20% height, min 100px */
+/* Speak-order wheel sits in its own band, above the control bar. */
 .meet-wheel-dock {
-  position: absolute;
-  left: 50%;
-  bottom: 52px;
-  transform: translateX(-50%);
+  position: relative;
   z-index: 5;
-  width: min(360px, 88vw);
-  height: max(100px, min(20vh, 160px));
+  width: min(520px, 100%);
+  height: clamp(160px, 22vh, 184px);
+  margin: 0 auto;
   pointer-events: none;
 }
 
@@ -912,25 +1041,58 @@
   text-shadow: 0 1px 4px #050705;
 }
 
-.meet-overlay.meet-overlay--actions {
+.meet-room__stage .meet-overlay.meet-overlay--actions {
+  position: relative;
+  left: auto;
+  top: auto;
   bottom: auto;
-  top: 58%;
+  transform: none;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
   z-index: 6;
+  padding: 6px 12px 0;
 }
 
 .meet-demo-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  position: relative;
   display: flex;
+  flex-wrap: nowrap;
   gap: 8px;
   align-items: center;
-  justify-content: center;
-  padding: 10px 12px 10px 100px;
+  justify-content: flex-start;
+  height: 64px;
+  box-sizing: border-box;
+  padding: 0 12px 0 72px;
+  overflow-x: auto;
   background: var(--tetra-void-panel);
   border-top: 1px solid var(--tetra-glass-border);
   z-index: 10;
+}
+
+.meet-demo-bar .tetra-btn {
+  flex: 0 0 auto;
+}
+
+.tetra-btn.meet-btn,
+.meet-setup__chip.meet-btn {
+  opacity: 0.38;
+}
+
+.tetra-btn.meet-btn:hover,
+.tetra-btn.meet-btn:focus-visible,
+.meet-setup__chip.meet-btn:hover,
+.meet-setup__chip.meet-btn:focus-visible {
+  opacity: 0.62;
+}
+
+.tetra-btn.meet-btn:active,
+.tetra-btn.meet-btn[aria-pressed="true"],
+.tetra-btn.meet-btn.is-dock-active,
+.meet-setup__chip.meet-btn:active,
+.meet-setup__chip.meet-btn[aria-pressed="true"] {
+  opacity: 1;
 }
 
 .meet-user-btn {
