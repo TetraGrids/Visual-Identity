@@ -18,7 +18,7 @@ import { VideoConferenceClient } from "../lib/VideoConferenceClient.jsx"
 import { Wheel } from "../components/Wheel.jsx"
 import { FocusStage, WaitingPreview } from "../components/FocusStage.jsx"
 import { CallSetup } from "../components/CallSetup.jsx"
-import { loadLook, saveLook, openCameraTrack, paintLook } from "../lib/look.js"
+import { loadLook, saveLook, openCameraTrack, openMicTrack, paintLook } from "../lib/look.js"
 import { StageClock } from "../components/StageClock.jsx"
 import { DoneButton } from "../components/DoneButton.jsx"
 import { TransitionClock } from "../components/TransitionClock.jsx"
@@ -64,6 +64,10 @@ export function Room({ meetingId }) {
       now: Date.now(),
     })
   })
+
+  React.useEffect(() => {
+    if (state.phase !== PHASES.TRANSITION) setCenterMine(false)
+  }, [state.phase])
 
   React.useEffect(() => {
     if (demo && state.phase === PHASES.LANDING) {
@@ -113,6 +117,8 @@ export function Room({ meetingId }) {
   const [localStream, setLocalStream] = React.useState(null)
   const [look, setLook] = React.useState(loadLook)
   const [effects, setEffects] = React.useState(false)
+  const [centerMine, setCenterMine] = React.useState(false)
+  const [loud, setLoud] = React.useState(false)
   const shareRef = React.useRef(null)
   const [shareStream, setShareStream] = React.useState(null)
   const deviceRef = React.useRef(`${look.videoEnabled}:${look.videoDeviceId || ""}`)
@@ -168,6 +174,60 @@ export function Room({ meetingId }) {
     if (state.phase === PHASES.PRESENTATIONS || state.phase === PHASES.TRANSITION) return
     stopShare()
   }, [state.phase])
+  React.useEffect(() => {
+    const waiting = state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED
+    if (waiting || look.audioEnabled === false) return
+    let dead = false
+    let mic = null
+    let ctx = null
+    let frame = 0
+    let on = false
+    let quietSince = 0
+    openMicTrack(look.audioDeviceId)
+      .then((track) => {
+        if (dead) {
+          track.stop()
+          return
+        }
+        mic = track
+        ctx = new AudioContext()
+        const analyser = ctx.createAnalyser()
+        analyser.fftSize = 256
+        ctx.createMediaStreamSource(new MediaStream([track.mediaStreamTrack])).connect(analyser)
+        const data = new Uint8Array(analyser.fftSize)
+        const tick = () => {
+          analyser.getByteTimeDomainData(data)
+          let sum = 0
+          for (let i = 0; i < data.length; i++) {
+            const v = (data[i] - 128) / 128
+            sum += v * v
+          }
+          const level = Math.sqrt(sum / data.length)
+          const t = performance.now()
+          if (!on && level > 0.12) {
+            on = true
+            quietSince = 0
+            setLoud(true)
+          } else if (on && level < 0.06) {
+            if (!quietSince) quietSince = t
+            if (t - quietSince > 280) {
+              on = false
+              setLoud(false)
+            }
+          } else if (on) quietSince = 0
+          frame = requestAnimationFrame(tick)
+        }
+        tick()
+      })
+      .catch(() => {})
+    return () => {
+      dead = true
+      cancelAnimationFrame(frame)
+      mic?.stop()
+      ctx?.close()
+      setLoud(false)
+    }
+  }, [state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED, look.audioEnabled, look.audioDeviceId])
   React.useEffect(() => {
     if (state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED) {
       deviceRef.current = `${look.videoEnabled}:${look.videoDeviceId || ""}`
@@ -302,6 +362,9 @@ export function Room({ meetingId }) {
           localId={local?.id}
           localStream={localStream}
           shareStream={shareStream}
+          centerMine={centerMine}
+          now={now}
+          loud={loud}
           preview={
             (state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED) && !showLiveKit
               ? { watch: Boolean(local?.watcher) }
@@ -608,20 +671,62 @@ export function Room({ meetingId }) {
 
       {!barHidden && (
         <div className="meet-demo-bar" onClick={(e) => e.stopPropagation()}>
-          <button
-            type="button"
-            className={`meet-user-btn${panelTab === "account" ? " is-active" : ""}`}
-            aria-label="Account"
-            aria-pressed={panelTab === "account"}
-            onClick={() => togglePanel("account")}
-            title={profile.name || localName || "Account"}
-          >
-            {profile.avatarUrl || localProofs.imageData ? (
-              <img src={profile.avatarUrl || localProofs.imageData} alt="" />
-            ) : (
-              <span>{(localName || "U").charAt(0).toUpperCase()}</span>
-            )}
-          </button>
+          <div className="meet-bar-left">
+            <button
+              type="button"
+              className="meet-icon-btn"
+              aria-label={look.audioEnabled === false ? "Unmute" : "Mute"}
+              aria-pressed={look.audioEnabled === false}
+              title={look.audioEnabled === false ? "Unmute" : "Mute"}
+              onClick={() => onLook({ ...look, audioEnabled: look.audioEnabled === false })}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v3"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+                {look.audioEnabled === false && (
+                  <path d="M5 5l14 14" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                )}
+              </svg>
+            </button>
+            <button
+              type="button"
+              className="meet-icon-btn"
+              aria-label={look.videoEnabled === false ? "Show camera" : "Hide camera"}
+              aria-pressed={look.videoEnabled === false}
+              title={look.videoEnabled === false ? "Show" : "Hide"}
+              onClick={() => onLook({ ...look, videoEnabled: look.videoEnabled === false })}
+            >
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path
+                  d="M3 8h11v9H3zM14 11l6-3v9l-6-3z"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.6"
+                />
+                {look.videoEnabled === false && (
+                  <path d="M5 5l14 14" fill="none" stroke="currentColor" strokeWidth="1.6" />
+                )}
+              </svg>
+            </button>
+            <button
+              type="button"
+              className={`meet-user-btn${panelTab === "account" ? " is-active" : ""}`}
+              aria-label="Account"
+              aria-pressed={panelTab === "account"}
+              onClick={() => togglePanel("account")}
+              title={profile.name || localName || "Account"}
+            >
+              {profile.avatarUrl || localProofs.imageData ? (
+                <img src={profile.avatarUrl || localProofs.imageData} alt="" />
+              ) : (
+                <span>{(localName || "U").charAt(0).toUpperCase()}</span>
+              )}
+            </button>
+          </div>
           {showPresentations && (
             <>
               <DoneButton
@@ -660,6 +765,16 @@ export function Room({ meetingId }) {
               >
                 Skip to vote
               </button>
+              {state.phase === PHASES.TRANSITION && (
+                <button
+                  type="button"
+                  className="tetra-btn meet-btn"
+                  aria-pressed={centerMine}
+                  onClick={() => setCenterMine((on) => !on)}
+                >
+                  {centerMine ? "Hide my display" : "Center my display"}
+                </button>
+              )}
             </>
           )}
           <button

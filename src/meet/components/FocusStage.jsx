@@ -43,6 +43,9 @@ export function FocusStage({
   localId,
   localStream,
   shareStream,
+  centerMine = false,
+  now = 0,
+  loud = false,
   children, // live video layer
 }) {
   const well = React.useRef(null)
@@ -134,6 +137,24 @@ export function FocusStage({
     measure()
   }
 
+  const open =
+    !speaker && !children && !preview && !screenShare && others.length > 0
+
+  if (open) {
+    return (
+      <div className="meet-focus">
+        <CircleField
+          people={others}
+          localId={localId}
+          localStream={localStream}
+          centerMine={centerMine}
+          now={now}
+          loud={loud}
+        />
+      </div>
+    )
+  }
+
   const picture = children ? (
     children
   ) : screenShare && shareStream ? (
@@ -208,6 +229,80 @@ export function FocusStage({
           </div>
         )}
       </div>
+    </div>
+  )
+}
+
+/**
+ * No speaker: every person is a circle that tiles the stage.
+ * A live voice (and, in demo, one person at a time) grows and glows.
+ * Centering your display lifts your camera into the middle.
+ */
+function CircleField({ people, localId, localStream, centerMine, now, loud }) {
+  const well = React.useRef(null)
+  const [box, setBox] = React.useState({ w: 0, h: 0 })
+
+  React.useEffect(() => {
+    const node = well.current
+    if (!node) return
+    const read = () => {
+      const s = getComputedStyle(node)
+      const padX = parseFloat(s.paddingLeft) + parseFloat(s.paddingRight)
+      const padY = parseFloat(s.paddingTop) + parseFloat(s.paddingBottom)
+      setBox({ w: node.clientWidth - padX, h: node.clientHeight - padY })
+    }
+    read()
+    const obs = new ResizeObserver(read)
+    obs.observe(node)
+    return () => obs.disconnect()
+  }, [])
+
+  const mine = centerMine ? people.find((p) => p.id === localId) : null
+  const ring = mine ? people.filter((p) => p.id !== localId) : people
+  const n = ring.length
+  const w = box.w || 1
+  const h = box.h || 1
+  const gap = 18
+  let cols = 1
+  let cell = 0
+  for (let c = 1; c <= Math.max(n, 1); c++) {
+    const rows = Math.ceil(Math.max(n, 1) / c)
+    const s = Math.min((w - gap * (c - 1)) / c, (h - gap * (rows - 1)) / rows)
+    if (s > cell) {
+      cols = c
+      cell = s
+    }
+  }
+  const voices = people.filter((p) => p.id !== localId)
+  const voiceId = voices.length ? voices[Math.floor(now / 2200) % voices.length].id : ""
+
+  function face(p, center) {
+    const talk = (loud && p.id === localId) || p.id === voiceId
+    const self = p.id === localId && localStream
+    return (
+      <div
+        key={p.id}
+        className={`meet-circle${self ? " is-local" : ""}${talk ? " is-talk" : ""}${center ? " is-center" : ""}`}
+        style={center ? undefined : { width: cell, height: cell, fontSize: cell * 0.32 }}
+        title={p.name}
+      >
+        {self ? (
+          <StreamVideo stream={localStream} />
+        ) : p.avatarUrl ? (
+          <img src={p.avatarUrl} alt="" />
+        ) : (
+          <span>{p.letter || (p.name || "").charAt(0)}</span>
+        )}
+      </div>
+    )
+  }
+
+  return (
+    <div className="meet-circles" ref={well}>
+      <div className="meet-circles__grid" style={{ gap, width: cols * cell + gap * (cols - 1) }}>
+        {ring.map((p) => face(p, false))}
+      </div>
+      {mine ? face(mine, true) : null}
     </div>
   )
 }
