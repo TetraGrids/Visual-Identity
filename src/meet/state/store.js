@@ -1,5 +1,6 @@
 import { generateRoomId } from "../lib/client-utils.js"
 import { FORMATS, FORMAT_META } from "./machine.js"
+import { PROCEDURES, procedureFor } from "./procedures.js"
 
 const MEETINGS_KEY = "tetra-meet-meetings"
 const PROFILE_KEY = "tetra-meet-profile"
@@ -29,6 +30,8 @@ function seedRecurring() {
       id: "contrib-club",
       name: "Contributor's Club",
       format: FORMATS.TOP3,
+      votingFormat: FORMATS.TOP3,
+      procedure: PROCEDURES.CLASSIC_CLUB,
       visibility: "public",
       recurring: "tue-17utc",
       startsAt: tue.getTime(),
@@ -42,6 +45,8 @@ function seedRecurring() {
       id: "antelope-roundtable",
       name: "Longhorn: Antelope Roundtable",
       format: FORMATS.ROUNDTABLE,
+      votingFormat: FORMATS.ROUNDTABLE,
+      procedure: PROCEDURES.INFINITY,
       visibility: "public",
       recurring: "wed-17utc",
       startsAt: wed.getTime(),
@@ -59,6 +64,8 @@ function seedActiveDemo() {
     id: "demo-now",
     name: "Tetra Wheel — Live Demo",
     format: FORMATS.ELECTION,
+    votingFormat: FORMATS.ELECTION,
+    procedure: PROCEDURES.CLASSIC_CLUB,
     visibility: "public",
     startsAt: Date.now() - 2 * 60 * 1000,
     durationMin: 60,
@@ -92,18 +99,38 @@ export function loadMeetings() {
   } else {
     // refresh recurring start times if stale (>7d past)
     const now = Date.now()
+    const demoNoToken = !import.meta.env.VITE_LK_TOKEN_SERVER_ID
     list = list.map((m) => {
-      if (m.recurring === "tue-17utc" && m.startsAt < now - DAY) {
-        return { ...m, startsAt: nextUtcWeekday(2, 17).getTime(), status: "scheduled" }
+      let migrated = {
+        ...m,
+        votingFormat: m.votingFormat || m.format || FORMATS.ELECTION,
+        format: m.votingFormat || m.format || FORMATS.ELECTION,
+        procedure: m.procedure || PROCEDURES.CLASSIC_CLUB,
       }
-      if (m.recurring === "wed-17utc" && m.startsAt < now - DAY) {
-        return { ...m, startsAt: nextUtcWeekday(3, 17).getTime(), status: "scheduled" }
+      if (
+        demoNoToken &&
+        !migrated.recurring &&
+        migrated.status === "scheduled" &&
+        migrated.startsAt &&
+        now >= migrated.startsAt - procedureFor(migrated.procedure).earlyEntryMs
+      ) {
+        migrated = { ...migrated, status: "active" }
       }
-      // Keep the built-in live demo joinable (refresh start if past late-join window)
-      if (m.id === "demo-now" && now - m.startsAt > 9 * 60 * 1000) {
-        return { ...m, startsAt: now - 2 * 60 * 1000, status: "active" }
+      if (migrated.recurring === "tue-17utc" && migrated.startsAt < now - DAY) {
+        return { ...migrated, startsAt: nextUtcWeekday(2, 17).getTime(), status: "scheduled" }
       }
-      return m
+      if (migrated.recurring === "wed-17utc" && migrated.startsAt < now - DAY) {
+        return { ...migrated, startsAt: nextUtcWeekday(3, 17).getTime(), status: "scheduled" }
+      }
+      // Keep ad-hoc live rooms joinable (refresh start if landing window elapsed)
+      if (
+        !migrated.recurring &&
+        migrated.status === "active" &&
+        now - migrated.startsAt > 9 * 60 * 1000
+      ) {
+        return { ...migrated, startsAt: now - 2 * 60 * 1000, status: "active" }
+      }
+      return migrated
     })
     if (!list.some((m) => m.id === "demo-now")) {
       list.unshift(seedActiveDemo())
@@ -123,17 +150,32 @@ export function getMeeting(id) {
 
 export function createMeeting(input) {
   const id = generateRoomId()
+  const format = input.votingFormat || input.format || FORMATS.ELECTION
+  const procedure = input.procedure || PROCEDURES.CLASSIC_CLUB
+  const timing = procedureFor(procedure)
+  const durationMin = timing.timed
+    ? (timing.landingMs +
+        timing.presentationsMs +
+        timing.consensusMs +
+        timing.breakMs +
+        timing.sharingMs) /
+      60000
+    : 0
   const meeting = {
     id,
     name: input.name || "Untitled Meeting",
-    format: input.format || FORMATS.ELECTION,
+    format,
+    votingFormat: format,
+    procedure,
     visibility: input.visibility || "public",
     startsAt: input.startsAt || Date.now() + 60 * 60 * 1000,
-    durationMin: Number(input.durationMin) || 60,
+    durationMin,
     membersMax: Number(input.membersMax) || 8,
     status: input.status || "scheduled",
     link: id,
-    rewardPreset: input.rewardPreset || FORMAT_META[input.format || FORMATS.ELECTION]?.shareModel || "none",
+    rewardPreset: input.rewardPreset || FORMAT_META[format]?.shareModel || "none",
+    advanceConfig: input.advanceConfig || null,
+    roles: input.roles || [],
     participants: 0,
   }
   const list = loadMeetings()

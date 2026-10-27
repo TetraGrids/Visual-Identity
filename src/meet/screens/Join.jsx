@@ -5,7 +5,7 @@
 import React from "react"
 import { navigate } from "../router.js"
 import { getMeeting, loadProfile, saveSession, loadRegistration } from "../state/store.js"
-import { canJoinMeeting, FORMAT_META } from "../state/machine.js"
+import { canJoinMeeting, canWatchMeeting, FORMAT_META } from "../state/machine.js"
 import { hasTokenServer, fetchRoomConnection } from "../lib/token.js"
 import { loadLook, saveLook } from "../lib/look.js"
 import { loginXpr } from "../chain/index.js"
@@ -35,17 +35,21 @@ export function Join({ meetingId }) {
     )
   }
 
-  const closed = !canJoinMeeting(meeting)
   const demo = !hasTokenServer()
+  const timing = demo ? { relaxTiming: true } : undefined
+  const participateOpen = canJoinMeeting(meeting, undefined, timing)
+  const watchOpen = canWatchMeeting(meeting, undefined, timing)
+  const closed = !participateOpen && !watchOpen
+  const joining = participateOpen ? mode : "watch"
 
   async function enter(choices) {
     setError("")
     setBusy(true)
     try {
-      if (mode === "participate" && !xpr?.account && !demo) {
+      if (joining === "participate" && !xpr?.account && !demo) {
         // Still allow demo without chain; production would block
       }
-      if (mode === "participate" && !demo && !xpr?.account) {
+      if (joining === "participate" && !demo && !xpr?.account) {
         setError("Connect XPR wallet to participate.")
         setBusy(false)
         return
@@ -62,13 +66,13 @@ export function Join({ meetingId }) {
       const reg = loadRegistration(meeting.id)
       saveSession({
         meetingId: meeting.id,
-        mode,
+        mode: joining,
         demo,
         connection,
         userChoices: choices || {
           username: profile.name || "Guest",
-          videoEnabled: mode === "participate",
-          audioEnabled: mode === "participate",
+          videoEnabled: joining === "participate",
+          audioEnabled: joining === "participate",
         },
         xprAccount: xpr?.account || "",
         proofs: reg,
@@ -102,7 +106,7 @@ export function Join({ meetingId }) {
 
       {closed && (
         <p className="meet-empty" style={{ borderColor: "var(--tetra-orange)", color: "var(--tetra-orange)" }}>
-          Entry closed. Room opens 15 minutes before start; locks after the 10-minute landing.
+          Entry closed. The meeting has ended.
         </p>
       )}
 
@@ -112,24 +116,30 @@ export function Join({ meetingId }) {
             <button
               type="button"
               className="meet-join__mode"
-              aria-pressed={mode === "watch"}
+              aria-pressed={joining === "watch"}
               onClick={() => setMode("watch")}
             >
               <strong>Watch</strong>
               <span>No login. Observe only — no publish.</span>
             </button>
-            <button
-              type="button"
-              className="meet-join__mode"
-              aria-pressed={mode === "participate"}
-              onClick={() => setMode("participate")}
-            >
-              <strong>Participate</strong>
-              <span>Requires XPR identity to speak and vote.</span>
-            </button>
+            {participateOpen && (
+              <button
+                type="button"
+                className="meet-join__mode"
+                aria-pressed={joining === "participate"}
+                onClick={() => setMode("participate")}
+              >
+                <strong>Participate</strong>
+                <span>Requires XPR identity to speak and vote.</span>
+              </button>
+            )}
           </div>
 
-          {mode === "participate" && (
+          {!participateOpen && watchOpen && (
+            <p className="meet-note">Members are locked. You can watch, not present.</p>
+          )}
+
+          {joining === "participate" && (
             <div className="meet-actions" style={{ marginBottom: 16 }}>
               <button type="button" className="tetra-btn" onClick={onXpr}>
                 {xpr?.account ? `XPR: ${xpr.account}` : "Connect XPR (placeholder)"}
@@ -140,7 +150,7 @@ export function Join({ meetingId }) {
             </div>
           )}
 
-          {mode === "watch" ? (
+          {joining === "watch" ? (
             <div className="meet-actions">
               <button
                 type="button"

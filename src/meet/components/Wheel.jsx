@@ -1,7 +1,7 @@
 import React from "react"
 import { SLOT_COUNT, slotAngle } from "../state/machine.js"
 import { SpeakerRing } from "./SpeakerRing.jsx"
-import { StreamVideo } from "./FocusStage.jsx"
+import { MuteMark, StreamVideo } from "./FocusStage.jsx"
 
 const RX = 36 // % of width — keeps the eight slots apart
 const RY = 26 // % of height — spreads the bottom slots clear of the speaker ring
@@ -26,7 +26,11 @@ export function Wheel({
   speakerId,
   localId,
   localStream,
+  muted = false,
+  mutedIds = [],
+  loud = false,
   speakerStartedAt,
+  speakEndsAt,
   now,
   onClaimActive,
   onMoveSlot,
@@ -150,7 +154,7 @@ export function Wheel({
             }
           >
             {isSpeaker && speakerStartedAt ? (
-              <SpeakerRing startedAt={speakerStartedAt} now={now} />
+              <SpeakerRing startedAt={speakerStartedAt} endsAt={speakEndsAt} now={now} />
             ) : null}
             <span className="meet-wheel__face">
               {id === localId && localStream ? (
@@ -161,6 +165,18 @@ export function Wheel({
                 p?.letter || ""
               )}
             </span>
+            {p?.host ? (
+              <span className="meet-host" title="Host">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <rect x="8" y="1" width="8" height="12" rx="4" fill="currentColor" />
+                  <path d="M9.2 4.2h5.6M9.2 6.8h5.6M9.2 9.4h5.6" stroke="#050705" strokeWidth="1.1" />
+                  <path d="M12 13v3.2M8 19.5h8" fill="none" stroke="currentColor" strokeWidth="1.8" />
+                </svg>
+              </span>
+            ) : null}
+            {(id === localId && muted) || (mutedIds || []).includes(id) ? (
+              <MuteMark big={id === localId && loud} />
+            ) : null}
             <span className="meet-wheel__label">{p?.name}</span>
           </button>
         )

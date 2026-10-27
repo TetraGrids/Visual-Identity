@@ -40,6 +40,31 @@ import {
   faqBySet,
   journey,
 } from "./data.js"
+import {
+  humanityOperator,
+  humanityBriefing,
+  humanityEvents,
+  meetingFormats,
+  meetingTimeline,
+  consensusRules,
+  falaTemple,
+  falaConstitution,
+  falaAlignment,
+  humanityCandidates,
+  candidateProofs,
+  rolesByType,
+  meetingHistory,
+  stewardshipList,
+  proposals,
+  falaToken,
+  gamedayRounds,
+  humanityChiefs,
+  democracyRules,
+  humanityFactions,
+  humanityGuide,
+  humanityAbout,
+  accessModes,
+} from "./humanity-data.js"
 
 const kinds = new Map()
 
@@ -1170,6 +1195,424 @@ registerKind("wallet", {
         { k: "Market", v: "XPR" },
       ]),
       body: `<p class="lede">Tradable for XPR, XUSDC. Market RA comes from earners. Local variants carry 2–4× after Level 4.</p>`,
+    })
+  },
+})
+
+registerKind("humanity-home", {
+  render(ctx) {
+    if (ctx.sub?.id === "actions") {
+      return page(ctx, {
+        kicker: "Humanity begins with one visible action",
+        body: cards(
+          humanityBriefing.actions,
+          (item) => panelCard({ ...item, action: '<button class="tetra-btn tetra-btn--sm" type="button">Open preview</button>' }),
+        ),
+      })
+    }
+    return page(ctx, {
+      title: `Welcome, ${humanityOperator.name.split(" ")[0]}`,
+      kicker: `${humanityOperator.faction} · ${humanityOperator.region}`,
+      stats: statsBar(humanityBriefing.stats),
+      body: `${feedList(humanityBriefing.feed)}
+        <p class="grid-hint">Preview data only. Registration, membership, and meeting state are not connected to live services.</p>`,
+    })
+  },
+})
+
+registerKind("humanity-meetings", {
+  render(ctx) {
+    if (ctx.room.id === "upcoming") {
+      if (ctx.sub?.id === "live") {
+        return page(ctx, {
+          kicker: "Active events appear here",
+          body: panelCard({
+            eyebrow: "No live room",
+            title: "The next room is not open",
+            copy: "A participant may enter 15 minutes before start. Spectators enter when the public stream begins.",
+            muted: true,
+          }),
+        })
+      }
+      if (ctx.sub?.id === "registered") {
+        return page(ctx, {
+          kicker: "One preview registration",
+          body: `${cards(
+            [humanityEvents[0]],
+            (item) => panelCard({ eyebrow: item.status, title: item.title, copy: `${item.when} · ${item.where}`, on: true }),
+          )}
+          <p class="grid-hint">TODO(meetings): connect registration, proofs, attendance, and room tokens.</p>`,
+        })
+      }
+      return page(ctx, {
+        kicker: "Recurring and announced rooms",
+        body: cards(
+          humanityEvents,
+          (item) => panelCard({
+            eyebrow: `${item.when} · ${item.status}`,
+            title: item.title,
+            copy: item.where,
+            action: '<a class="tetra-btn tetra-btn--sm" href="/meet.html">Meeting preview</a>',
+          }),
+        ),
+      })
+    }
+    if (ctx.room.id === "formats") {
+      return page(ctx, {
+        kicker: meetingFormats[ctx.sub?.id]?.kicker || "Faction format",
+        body: `${panelCard({
+          eyebrow: "Humanity meeting format",
+          title: meetingFormats[ctx.sub?.id]?.title || "Roundtable",
+          copy: meetingFormats[ctx.sub?.id]?.copy || meetingFormats.roundtable.copy,
+          on: true,
+        })}
+        <p class="grid-hint">Reward presets and funding sources are future configuration. This preview covers the complete meeting run-through only.</p>`,
+      })
+    }
+    if (ctx.sub?.id === "consensus") {
+      return page(ctx, {
+        kicker: "Faction-approved threshold",
+        body: cards(consensusRules, (item) => panelCard(item)),
+      })
+    }
+    if (ctx.sub?.id === "entry") {
+      return page(ctx, {
+        kicker: "Identity and membership gate",
+        body: cards(
+          [
+            { eyebrow: "Free", title: "Watch", copy: "No login is required for a public stream. A free account preserves history." },
+            { eyebrow: "Member", title: "Participate", copy: "Login, eligibility, on-time arrival, and faction rules are checked before joining." },
+            { eyebrow: "Cutoff", title: "Ten minutes late", copy: "The participant room locks after landing. Late arrivals may watch when a stream is public." },
+          ],
+          (item) => panelCard(item),
+        ),
+      })
+    }
+    return page(ctx, {
+      kicker: "Registration → landing → discernment",
+      body: calList(meetingTimeline),
+    })
+  },
+})
+
+registerKind("humanity-faction", {
+  render(ctx) {
+    if (ctx.room.id === "temple") {
+      if (ctx.sub?.id === "mission") {
+        return page(ctx, {
+          kicker: "What FALA does",
+          body: cards(
+            falaTemple.mission.map((copy, index) => ({ eyebrow: `0${index + 1}`, title: ["Freedom", "Connection", "Healing"][index], copy })),
+            (item) => panelCard(item),
+          ),
+        })
+      }
+      return page(ctx, {
+        kicker: ctx.sub?.id === "foundation" ? "Foundation" : "Vision",
+        body: panelCard({
+          eyebrow: "FALA · Temple",
+          title: ctx.sub?.id === "foundation" ? falaTemple.foundation.title : falaTemple.vision.title,
+          copy: ctx.sub?.id === "foundation" ? falaTemple.foundation.copy : falaTemple.vision.copy,
+          on: true,
+        }),
+      })
+    }
+    if (ctx.room.id === "constitution") {
+      if (ctx.sub?.id === "roles") {
+        return page(ctx, {
+          kicker: "Responsibilities, not status",
+          body: cards(falaConstitution.roles, (item) => panelCard({ title: item.name, copy: item.copy })),
+        })
+      }
+      if (ctx.sub?.id === "cycle") {
+        return page(ctx, {
+          kicker: "Chief continuity",
+          stats: statsBar(falaConstitution.cycle),
+          body: '<p class="lede">Elections happen twice a year. Each winning Chief serves for two years. A vacancy triggers a snap meeting within one to two weeks.</p>',
+        })
+      }
+      return page(ctx, {
+        kicker: "Published faction boundaries",
+        body: acc(falaConstitution.boundaries),
+      })
+    }
+    return page(ctx, {
+      kicker: ctx.sub?.id === "unbreakables" ? "Practice" : "Alignment check",
+      body: `<ol class="grid-train">${(ctx.sub?.id === "unbreakables" ? falaAlignment.unbreakables : falaAlignment.checks)
+        .map(
+          (item, index) => `<li><span class="eyebrow">0${index + 1}</span><strong>${esc(item)}</strong></li>`,
+        )
+        .join("")}</ol>`,
+    })
+  },
+  hydrate(root) {
+    bindAcc(root)
+  },
+})
+
+registerKind("humanity-people", {
+  render(ctx) {
+    if (ctx.room.id === "candidates") {
+      return page(ctx, {
+        kicker: ctx.sub?.id === "proofs" ? "Evidence shown during presentation" : "Any eligible voter may stand",
+        body:
+          ctx.sub?.id === "proofs"
+            ? cards(candidateProofs, (item) => panelCard(item))
+            : cards(humanityCandidates, personCard),
+      })
+    }
+    if (ctx.room.id === "roles") {
+      return page(ctx, {
+        kicker: "Factions may add or modify roles",
+        body: cards(
+          rolesByType[ctx.sub?.id] || rolesByType.noble,
+          (item) => panelCard({ eyebrow: ctx.sub?.name || "Role", title: item.title, copy: item.copy }),
+        ),
+      })
+    }
+    if (ctx.sub?.id === "history") {
+      return page(ctx, {
+        kicker: "Participation and proofs",
+        body: table(["Meeting", "Access", "Proofs", "Date"], meetingHistory),
+      })
+    }
+    return page(ctx, {
+      kicker: humanityOperator.access,
+      body: `<div class="grid-passport">
+        ${identity({ initials: humanityOperator.initials, name: humanityOperator.name, meta: `${humanityOperator.region} · ${humanityOperator.nation}` })}
+        ${metrics([
+          { k: "Faction", v: humanityOperator.faction },
+          { k: "Account", v: humanityOperator.account },
+          { k: "Titles", v: "0" },
+          { k: "Proofs", v: "2" },
+        ])}
+        <p class="lede">Titles record election or appointment. Roles carry published responsibilities. Neither token holdings nor a title increase voting power.</p>
+      </div>`,
+    })
+  },
+})
+
+registerKind("humanity-stewardship", {
+  render(ctx) {
+    if (ctx.room.id === "chief-list") {
+      if (ctx.sub?.id === "routing") {
+        return page(ctx, {
+          kicker: "Up to 12 accounts or nested lists",
+          body: cards(
+            [
+              { eyebrow: "Routing contract", title: "Weighted rotational split", copy: "Weights are totaled and each incoming token is divided across listed accounts." },
+              { eyebrow: "Custom memo", title: "Purpose travels with payment", copy: "Memo support is planned from the Flex routing pattern." },
+              { eyebrow: "Failure handling", title: "Atomic behavior is not final", copy: "TODO(chain): define failed-action recovery before funds can move." },
+            ],
+            (item) => panelCard(item),
+          ),
+        })
+      }
+      return page(ctx, {
+        kicker: "Published preview · not on-chain",
+        body: table(
+          ["Position", "Receiving account", "Weight", "Purpose"],
+          stewardshipList.map((item) => [item.position, item.account, item.weight, item.purpose]),
+        ),
+      })
+    }
+    if (ctx.room.id === "proposals") {
+      return page(ctx, {
+        kicker: ctx.sub?.id === "funded" ? "Verified funding" : "Listed proposals",
+        body: cards(proposals[ctx.sub?.id] || proposals.planned, (item) => panelCard(item)),
+      })
+    }
+    if (ctx.sub?.id === "chain") {
+      return page(ctx, {
+        kicker: "XPR integration placeholder",
+        body: cards(
+          [
+            { eyebrow: "TODO(chain)", title: "Read FALA token state", copy: "Supply, market, transfer tax, and routing must come from verified contracts." },
+            { eyebrow: "TODO(chain)", title: "Verify Chief List", copy: "The active list must be signed by eligible Chiefs after Gameday." },
+          ],
+          (item) => panelCard({ ...item, muted: true }),
+        ),
+      })
+    }
+    return page(ctx, {
+      kicker: "Resources move · votes stay human",
+      stats: statsBar(falaToken.resource),
+      body: `<ul class="grid-ladder">${falaToken.rules.map((item) => `<li><span>Rule</span>${esc(item)}</li>`).join("")}</ul>`,
+    })
+  },
+})
+
+registerKind("humanity-democracy", {
+  render(ctx) {
+    if (ctx.room.id === "gameday") {
+      if (ctx.sub?.id === "rounds") {
+        return page(ctx, {
+          kicker: "Fractal election",
+          body: `<ol class="grid-train">${gamedayRounds
+            .map(
+              (item) => `<li><span class="eyebrow">${esc(item.step)}</span><strong>${esc(item.title)}</strong><p>${esc(item.copy)}</p></li>`,
+            )
+            .join("")}</ol>`,
+        })
+      }
+      return page(ctx, {
+        kicker: "Live Chief election",
+        body: panelCard({
+          eyebrow: "FALA · TBA",
+          title: "First Chief Gameday",
+          copy: "Any eligible voter may run. Small groups advance the people they believe best represent themselves and the group. The first completed election marks FALA’s birth.",
+          action: '<a class="tetra-btn tetra-btn--primary tetra-btn--sm" href="/meet.html">Election preview</a>',
+          on: true,
+        }),
+      })
+    }
+    if (ctx.room.id === "chiefs") {
+      if (ctx.sub?.id === "terms") {
+        return page(ctx, {
+          kicker: "Staggered continuity",
+          body: cards(
+            [
+              { eyebrow: "Election", title: "Every six months", copy: "A winning Chief serves for two years." },
+              { eyebrow: "Vacancy", title: "Snap meeting", copy: "Held within one to two weeks when a Chief steps down." },
+              { eyebrow: "Privilege", title: "Sign budgets", copy: "Chiefs earn the privilege of signing new budgets into effect." },
+            ],
+            (item) => panelCard(item),
+          ),
+        })
+      }
+      return page(ctx, {
+        kicker: "Founding set · preview",
+        body: cards(humanityChiefs, personCard),
+      })
+    }
+    return page(ctx, {
+      kicker: ctx.sub?.id === "change" ? "What can change" : "Power and responsibility",
+      body: cards(
+        democracyRules[ctx.sub?.id] || democracyRules.titles,
+        (item) => panelCard(item),
+      ),
+    })
+  },
+})
+
+registerKind("humanity-locales", {
+  render(ctx) {
+    const levels = {
+      globe: {
+        eyebrow: "Highest level",
+        title: "Earth",
+        copy: "Humanity holds the common game board and the registry of factions.",
+      },
+      nation: {
+        eyebrow: "Political layer",
+        title: humanityOperator.nation,
+        copy: "Each nation can hold legal, ballot-access, cultural, and faction-specific work.",
+      },
+      division: {
+        eyebrow: "Top administrative division",
+        title: humanityOperator.region,
+        copy: "The first regional layer below the nation. Meeting history, roles, and local initiatives can anchor here.",
+      },
+    }
+    return page(ctx, {
+      kicker: "Globe → nation → top division",
+      body: panelCard({ ...levels[ctx.sub?.id], on: true }),
+    })
+  },
+})
+
+registerKind("humanity-system", {
+  render(ctx) {
+    if (ctx.room.id === "factions") {
+      return page(ctx, {
+        kicker: ctx.sub?.id === "register" ? "Pregnancy → first Gameday → birth" : "Shared desire",
+        body:
+          ctx.sub?.id === "register"
+            ? cards(
+                [
+                  { eyebrow: "01", title: "Constitution + Temple", copy: "Behavior and boundaries; vision and mission." },
+                  { eyebrow: "02", title: "Four Chiefs", copy: "Plus one Noble and one Steward; the same four people may fill them initially." },
+                  { eyebrow: "03", title: "Flex token", copy: "Yield and project funds routed through the Chief Stewardship List." },
+                ],
+                (item) => panelCard(item),
+              )
+            : cards(humanityFactions, (item) => panelCard({ ...item, on: item.title === "FALA" })),
+      })
+    }
+    if (ctx.room.id === "guide") {
+      return page(ctx, {
+        kicker: ctx.sub?.id === "maintain" ? "Faction requirements" : "Core game",
+        body: `<ol class="grid-train">${humanityGuide[ctx.sub?.id === "maintain" ? "maintain" : "core"]
+          .map(
+            (item, index) => `<li><span class="eyebrow">0${index + 1}</span><strong>${esc(item)}</strong></li>`,
+          )
+          .join("")}</ol>`,
+      })
+    }
+    return page(ctx, {
+      kicker: ctx.sub?.id === "history" ? "Twelve years of iteration" : "Why Humanity",
+      body:
+        ctx.sub?.id === "history"
+          ? cards(humanityAbout.history, (item) => panelCard(item))
+          : cards(
+              humanityAbout.why.map((copy, index) => ({ eyebrow: `0${index + 1}`, title: ["Focus", "Potential", "Validation"][index], copy })),
+              (item) => panelCard(item),
+            ),
+    })
+  },
+})
+
+registerKind("humanity-control", {
+  render(ctx) {
+    if (ctx.room.id === "access") {
+      return page(ctx, {
+        kicker: "Permissions are enforced server-side later",
+        body: panelCard({
+          eyebrow: accessModes[ctx.sub?.id]?.status || accessModes.spectator.status,
+          title: accessModes[ctx.sub?.id]?.title || accessModes.spectator.title,
+          copy: accessModes[ctx.sub?.id]?.copy || accessModes.spectator.copy,
+          on: ctx.sub?.id === "member",
+        }),
+      })
+    }
+    if (ctx.room.id === "account") {
+      if (ctx.sub?.id === "permissions") {
+        return page(ctx, {
+          kicker: humanityOperator.access,
+          body: table(
+            ["Capability", "Spectator", "Member"],
+            [
+              ["Watch public meeting", "Yes", "Yes"],
+              ["Speak and vote", "No", "Eligible"],
+              ["Stand as candidate", "No", "Eligible"],
+              ["Publish proofs", "No", "Yes"],
+              ["Receive rewards", "No", "Eligible"],
+            ],
+          ),
+        })
+      }
+      return page(ctx, {
+        kicker: "Google · Microsoft · XPR",
+        body: `${identity({ initials: humanityOperator.initials, name: humanityOperator.name, meta: humanityOperator.account })}
+          <div class="grid-row">
+            <button class="tetra-btn tetra-btn--primary" type="button">XPR preview</button>
+            <button class="tetra-btn" type="button">Google preview</button>
+            <button class="tetra-btn" type="button">Microsoft preview</button>
+          </div>
+          <p class="grid-hint">TODO(auth): connect identity providers and restore live permissions.</p>`,
+      })
+    }
+    return page(ctx, {
+      kicker: ctx.sub?.id === "privacy" ? "Proof and meeting visibility" : "Void · Jost · radius 0",
+      body: ctx.sub?.id === "privacy"
+        ? cards(
+            [
+              { eyebrow: "Profile", title: "Public faction identity", copy: "Name, titles, roles, and published proofs follow faction visibility rules." },
+              { eyebrow: "Meetings", title: "Public or faction-bound", copy: "The host declares who may watch, attend, and receive rewards." },
+            ],
+            (item) => panelCard(item),
+          )
+        : '<p class="lede">Reduce motion follows the operating system. The Grid keeps all content on solid void and uses glass only for Tetra chrome.</p>',
     })
   },
 })

@@ -11,11 +11,16 @@ export function ConsensusVote({
   positions,
   phase,
   ranked,
+  candidateIds,
+  maxChoices = 3,
   onCast,
   onVerified,
   onFail,
 }) {
   const group = participants.filter((p) => groupIds.includes(p.id))
+  const candidates = candidateIds
+    ? group.filter((p) => candidateIds.includes(p.id))
+    : group
   const castCount = Object.keys(votes).filter((id) => groupIds.includes(id)).length
   const [ranking, setRanking] = React.useState([])
   const [busy, setBusy] = React.useState(false)
@@ -26,7 +31,7 @@ export function ConsensusVote({
     if (mine) return
     setRanking((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id)
-      if (prev.length >= 3) return prev
+      if (prev.length >= maxChoices) return prev
       return [...prev, id]
     })
   }
@@ -34,7 +39,7 @@ export function ConsensusVote({
   const committed = groupIds.map((id) => votes[id]).filter((ranking) => ranking?.length)
   const preview = mine ? committed : shown.length ? [...committed, shown] : committed
   const snap = rankSnapshot(
-    group.map((p) => p.id),
+    candidates.map((p) => p.id),
     ranked ? preview : [],
   )
   const firstLocked = {}
@@ -46,7 +51,7 @@ export function ConsensusVote({
   }
   const orbs = ranked
     ? snap.rows.map((row) => {
-        const person = group.find((p) => p.id === row.id)
+        const person = candidates.find((p) => p.id === row.id)
         return {
           id: row.id,
           name: person?.name || "",
@@ -116,7 +121,10 @@ export function ConsensusVote({
           first vote there.
         </p>
         <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-          {group.map((p) => {
+        {candidates.length === 0 && (
+          <p className="meet-note">No eligible candidates have completed their proofs.</p>
+        )}
+          {candidates.map((p) => {
             const place = shown.indexOf(p.id)
             return (
               <button
@@ -151,7 +159,7 @@ export function ConsensusVote({
             <button
               type="button"
               className="tetra-btn"
-              onClick={() => onCast?.(group.map((p) => p.id).slice(0, 3))}
+              onClick={() => onCast?.(candidates.map((p) => p.id).slice(0, maxChoices))}
             >
               Demo: auto-rank
             </button>
@@ -161,11 +169,13 @@ export function ConsensusVote({
     ) : (
       <HeadcountVote
         group={group}
+        candidates={candidates}
         need={consensusThreshold(group.length)}
         castCount={castCount}
         shown={shown}
         mine={mine}
         localId={localId}
+        maxChoices={maxChoices}
         toggle={toggle}
         onCast={onCast}
       />
@@ -179,15 +189,30 @@ export function ConsensusVote({
   )
 }
 
-function HeadcountVote({ group, need, castCount, shown, mine, localId, toggle, onCast }) {
+function HeadcountVote({
+  group,
+  candidates,
+  need,
+  castCount,
+  shown,
+  mine,
+  localId,
+  maxChoices,
+  toggle,
+  onCast,
+}) {
   return (
     <div className="meet-vote meet-overlay" style={{ bottom: 72 }}>
       <h3>Consensus vote</h3>
       <p className="meet-note">
-        Need {need} of {group.length} (⅔). Cast {castCount}/{need}. Rank up to three.
+        Need {need} of {group.length} (⅔). Cast {castCount}/{need}. Choose{" "}
+        {maxChoices === 1 ? "one" : `up to ${maxChoices}`}.
       </p>
       <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
-        {group.map((p) => (
+        {candidates.length === 0 && (
+          <p className="meet-note">No eligible candidates have completed their proofs.</p>
+        )}
+        {candidates.map((p) => (
           <button
             key={p.id}
             type="button"
@@ -208,7 +233,7 @@ function HeadcountVote({ group, need, castCount, shown, mine, localId, toggle, o
           {mine ? "Ballot locked" : "Cast ballot"}
         </button>
         {localId && !mine && (
-          <button type="button" className="tetra-btn" onClick={() => onCast?.(group.map((p) => p.id).slice(0, 3))}>
+          <button type="button" className="tetra-btn" onClick={() => onCast?.(candidates.map((p) => p.id).slice(0, maxChoices))}>
             Demo: auto-rank
           </button>
         )}

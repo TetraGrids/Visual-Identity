@@ -77,13 +77,13 @@ function wire(cell, { tiny }) {
   const parts = [
     `<rect x="${ix}" y="${iy}" width="${iw}" height="${head}" fill="none" stroke="currentColor" stroke-width="${s}" opacity="0.55"/>`,
   ]
-  const scores = new Set(["scores", "claim", "season", "metrics", "stake", "wallet", "activation"])
-  const maps = new Set(["map", "locales"])
+  const scores = new Set(["scores", "claim", "season", "metrics", "stake", "wallet", "activation", "humanity-home", "humanity-stewardship"])
+  const maps = new Set(["map", "locales", "humanity-locales"])
   const passports = new Set(["passport", "verification"])
-  const plates = new Set(["badges", "accolades", "stamps", "barons", "stewards", "founding", "roles"])
-  const grids = new Set(["recurve", "recurve-room", "chiefs"])
-  const heroes = new Set(["mission", "level", "settings"])
-  const lists = new Set(["calendar", "training", "actions", "faq", "rules", "procedures", "hura", "venues", "projects", "reps", "algorithm"])
+  const plates = new Set(["badges", "accolades", "stamps", "barons", "stewards", "founding", "roles", "humanity-people"])
+  const grids = new Set(["recurve", "recurve-room", "chiefs", "humanity-meetings", "humanity-democracy"])
+  const heroes = new Set(["mission", "level", "settings", "humanity-control"])
+  const lists = new Set(["calendar", "training", "actions", "faq", "rules", "procedures", "hura", "venues", "projects", "reps", "algorithm", "humanity-faction", "humanity-system"])
 
   if (scores.has(kind)) {
     const stats = ih * 0.28

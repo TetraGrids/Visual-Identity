@@ -1,6 +1,6 @@
 import L from "leaflet"
 import "leaflet/dist/leaflet.css"
-import { mapPlaces } from "./data.js"
+import { humanityPlaces as mapPlaces } from "./humanity-data.js"
 
 const TILE = "https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
 const ATTR = '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
@@ -23,7 +23,7 @@ export function mountGridMap(el) {
     zoomControl: false,
     attributionControl: true,
     scrollWheelZoom: false,
-  }).setView([6.455, 3.4], 12)
+  }).setView([12, -78], 3)
 
   L.tileLayer(TILE, { attribution: ATTR, maxZoom: 19 }).addTo(map)
   L.control.zoom({ position: "bottomleft" }).addTo(map)
@@ -45,6 +45,9 @@ export function mountGridMap(el) {
   const filter = el.dataset.mapSet
   const places = mapPlaces.filter((place) => !filter || place.set === filter)
 
+  if (places.length > 1) map.fitBounds(places.map((place) => [place.lat, place.lng]), { padding: [44, 44], maxZoom: 5 })
+  else if (places[0]) map.setView([places[0].lat, places[0].lng], 8)
+
   places.forEach((place) => {
     const marker = L.marker([place.lat, place.lng], { icon: markIcon() }).addTo(map)
     marker.on("click", () => {
@@ -65,7 +68,7 @@ export function mountGridMap(el) {
         kind: "Map",
         lat: event.latlng.lat,
         lng: event.latlng.lng,
-        copy: "Centered. Markers are specimen offers and Recurve seats.",
+        copy: "Centered. Markers are specimen FALA chapters and Humanity meetings.",
       },
     )
   })

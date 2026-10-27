@@ -2,13 +2,14 @@ import "../brand/tokens.css"
 import "../brand/buttons.css"
 import "./grid.css"
 import "./grid/kinds.js"
-import { defaultGrid } from "./grid/config.js"
+import { humanityGrid as defaultGrid } from "./grid/humanity-config.js"
 import { renderGrid, hydrateKinds } from "./grid/render.js"
 import { createGridEngine, itemsOf } from "./grid/snap.js"
 import { mountGridMap } from "./grid/map.js"
 import { mountOverview } from "./grid/overview.js"
 
-export { defaultGrid, insertLane } from "./grid/config.js"
+export { humanityGrid as defaultGrid } from "./grid/humanity-config.js"
+export { insertLane } from "./grid/config.js"
 export { registerKind } from "./grid/kinds.js"
 
 function parseHash() {

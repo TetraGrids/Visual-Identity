@@ -11,7 +11,7 @@ export const splash = {
   eyebrow: "Tetra On",
   headline: "Regional Regency",
   lede: "Digital citizenship. Daily discovery. Regional regency.",
-  body: "Stone still warm from the sun. Olive air. An hour from the Oracle, Plato stands in the courtyard — because this is where a people last rebuilt how they decide together, and it is time again.",
+  body: "You sit on stone still warm from the summer sun. The air of excitement grips you. In an hour's time, a new regent will be elected. Plato taught the mystic vibration of the platonic solids — fire, earth, air, water, and the cosmos held in five shapes. Solon canceled the debts and reorganized who could hold office, the rebuild of how a people decide together, and it is time again.",
   close: "You are not downloading an app. You are walking into Tetra: a global grid of human-to-human offers. Four faces. One membership. Regency that starts in your region.",
   cta: "Enter the courtyard",
 }
@@ -22,12 +22,12 @@ export const pains = [
     solid: "tetrahedron",
     face: "Passport",
     kicker: "Fire · tetrahedron",
-    scenario: "You finish the work that took a month. You put it where people already scroll. By night the room you actually live in has not seen it.",
-    question: "When that happens, what does the feed do?",
-    choices: ["Scrolls by", "Friends like", "Gets buried", "Changes rooms"],
+    scenario: "",
+    question: "You posted the work. Your dopamine hit from the feed arrived. The room you live in still has not seen it. What did that hit pay you?",
+    choices: ["A like", "A count", "A scroll", "Silence"],
     heardTitle: "You have been heard.",
     belief:
-      "Attention is scarce. We treat it as a daily force, not a slot machine. A like from a friend is not a region looking up. Discovery is a chart you can climb — your region, then the nation, then the world — if you show up with an offer.",
+      "Attention is the primary force carrier, and the most true currency of the universe. Conscious creators focus on a piece of reality until it holds and becomes real. A dopamine hit is not that focus. Discovery is the chart where attention completes an offer — your region, then the nation, then the world.",
     deeper: {
       headline: "A stage with a memory",
       movie:
@@ -58,12 +58,12 @@ export const pains = [
     solid: "tetrahedron",
     face: "Grid",
     kicker: "Human collective · tetrahedron",
-    scenario: "The tools got faster than speech. A group can spin up a stack in a weekend and still fail to decide who brings water. Collaboration is the broken half of the miracle.",
-    question: "What is breaking first?",
+    scenario: "Collaboration is easier than ever, but humans always get in the way. When we collaborate better we experience more. Every team is an art project.",
+    question: "What was the blemish on your last team effort?",
     choices: ["Trust", "Meetings", "Incentives", "Attention"],
     heardTitle: "You have been heard.",
     belief:
-      "The unit is not a post. The unit is an offer between humans. You become a node by completing them. Radical inclusion — everyone is invited — and honest selection. Laws of nature apply. Few will gain the most. Some will win.",
+      "Conscious effort increases exponentially when multiple humans focus intense desire. The channel is opening.",
     deeper: {
       headline: "Technology got us paid. People get us together.",
       movie:
@@ -94,12 +94,12 @@ export const pains = [
     solid: "octahedron",
     face: "RA",
     kicker: "Air · octahedron",
-    scenario: "Finance never had more machinery. The dominant money never looked less sane: sovereign debt compounding in the dark while the apps on the surface glitter.",
-    question: "What feels most broken?",
+    scenario: "Financial weight is accelerating to the digital age. The dominant money never looked less sane: sovereign debt compounding to no end without a change.",
+    question: "What broken instrument is most urgent to repair?",
     choices: ["Debt", "Interest", "Wages", "Access"],
     heardTitle: "You have been heard.",
     belief:
-      "Time should faucet like the sun — a daily allotment — not compound against the public. RA is that faucet: attention you earn and spend. TETRA is for permanence. The live money work sits next to us on XPR. We do not pretend the old interest engine is fine.",
+      "In life, attention is abundant like the sun and rain, and over time value is grown. Money should be more like trees growing fruit, not squeezing juice from rocks.",
     deeper: {
       headline: "A daily sun. Not a compounding shadow.",
       movie:

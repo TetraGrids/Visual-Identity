@@ -46,6 +46,8 @@ export function FocusStage({
   centerMine = false,
   now = 0,
   loud = false,
+  muted = false,
+  mutedIds = [],
   children, // live video layer
 }) {
   const well = React.useRef(null)
@@ -150,6 +152,8 @@ export function FocusStage({
           centerMine={centerMine}
           now={now}
           loud={loud}
+          muted={muted}
+          mutedIds={mutedIds}
         />
       </div>
     )
@@ -233,12 +237,38 @@ export function FocusStage({
   )
 }
 
+/** Same slash-mic as the bar. Big when they are trying to talk while muted. */
+export function MuteMark({ big }) {
+  const [open, setOpen] = React.useState(big)
+  React.useEffect(() => {
+    if (big) {
+      setOpen(true)
+      return
+    }
+    const t = setTimeout(() => setOpen(false), 1000)
+    return () => clearTimeout(t)
+  }, [big])
+  return (
+    <span className={`meet-mute${open ? " is-big" : ""}`} aria-hidden="true">
+      <svg viewBox="0 0 24 24">
+        <path
+          d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v3"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.6"
+        />
+        <path d="M5 5l14 14" fill="none" stroke="currentColor" strokeWidth="1.6" />
+      </svg>
+    </span>
+  )
+}
+
 /**
  * No speaker: every person is a circle that tiles the stage.
  * A live voice (and, in demo, one person at a time) grows and glows.
  * Centering your display lifts your camera into the middle.
  */
-function CircleField({ people, localId, localStream, centerMine, now, loud }) {
+function CircleField({ people, localId, localStream, centerMine, now, loud, muted, mutedIds }) {
   const well = React.useRef(null)
   const [box, setBox] = React.useState({ w: 0, h: 0 })
 
@@ -273,12 +303,14 @@ function CircleField({ people, localId, localStream, centerMine, now, loud }) {
       cell = s
     }
   }
-  const voices = people.filter((p) => p.id !== localId)
+  const voices = people.filter((p) => p.id !== localId && !(mutedIds || []).includes(p.id))
   const voiceId = voices.length ? voices[Math.floor(now / 2200) % voices.length].id : ""
 
   function face(p, center) {
-    const talk = (loud && p.id === localId) || p.id === voiceId
-    const self = p.id === localId && localStream
+    const mine = p.id === localId
+    const held = (mine && muted) || (mutedIds || []).includes(p.id)
+    const talk = !held && ((loud && mine) || p.id === voiceId)
+    const self = mine && localStream
     return (
       <div
         key={p.id}
@@ -286,13 +318,16 @@ function CircleField({ people, localId, localStream, centerMine, now, loud }) {
         style={center ? undefined : { width: cell, height: cell, fontSize: cell * 0.32 }}
         title={p.name}
       >
-        {self ? (
-          <StreamVideo stream={localStream} />
-        ) : p.avatarUrl ? (
-          <img src={p.avatarUrl} alt="" />
-        ) : (
-          <span>{p.letter || (p.name || "").charAt(0)}</span>
-        )}
+        <div className="meet-circle__face">
+          {self ? (
+            <StreamVideo stream={localStream} />
+          ) : p.avatarUrl ? (
+            <img src={p.avatarUrl} alt="" />
+          ) : (
+            <span>{p.letter || (p.name || "").charAt(0)}</span>
+          )}
+        </div>
+        {held ? <MuteMark big={mine && loud} /> : null}
       </div>
     )
   }

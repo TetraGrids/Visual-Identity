@@ -11,6 +11,8 @@ import {
   FORMAT_META,
   createInitialMeetingState,
   reduceMeeting,
+  eligibleCandidateIds,
+  advanceCount,
 } from "../state/machine.js"
 import { makeDemoParticipants, makeManyForBreakout } from "../state/demoParticipants.js"
 import { hasTokenServer } from "../lib/token.js"
@@ -60,6 +62,9 @@ export function Room({ meetingId }) {
     }
     return createInitialMeetingState({
       format: meeting?.format || "election",
+      procedure: meeting?.procedure,
+      advanceConfig: meeting?.advanceConfig,
+      roles: meeting?.roles,
       participants,
       now: Date.now(),
     })
@@ -68,13 +73,6 @@ export function Room({ meetingId }) {
   React.useEffect(() => {
     if (state.phase !== PHASES.TRANSITION) setCenterMine(false)
   }, [state.phase])
-
-  React.useEffect(() => {
-    if (demo && state.phase === PHASES.LANDING) {
-      const t = setTimeout(() => dispatch({ type: "FORCE_PHASE", phase: PHASES.LOCKED }), 8000)
-      return () => clearTimeout(t)
-    }
-  }, [demo, state.phase])
 
   const localBallotKey = (() => {
     const me = state.participants.find((p) => p.isLocal)
@@ -176,7 +174,7 @@ export function Room({ meetingId }) {
   }, [state.phase])
   React.useEffect(() => {
     const waiting = state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED
-    if (waiting || look.audioEnabled === false) return
+    if (waiting) return
     let dead = false
     let mic = null
     let ctx = null
@@ -227,7 +225,7 @@ export function Room({ meetingId }) {
       ctx?.close()
       setLoud(false)
     }
-  }, [state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED, look.audioEnabled, look.audioDeviceId])
+  }, [state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED, look.audioDeviceId])
   React.useEffect(() => {
     if (state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED) {
       deviceRef.current = `${look.videoEnabled}:${look.videoDeviceId || ""}`
@@ -341,6 +339,7 @@ export function Room({ meetingId }) {
     dispatch({ type: "NOTIFY", id, text: `${localName}: ${text}`, now: Date.now() })
   }
 
+  const clock = state.paused && state.pausedAt ? state.pausedAt : now
   const showLiveKit =
     !demo && session?.connection?.serverUrl && session?.connection?.participantToken
 
@@ -363,8 +362,10 @@ export function Room({ meetingId }) {
           localStream={localStream}
           shareStream={shareStream}
           centerMine={centerMine}
-          now={now}
+          now={clock}
           loud={loud}
+          muted={look.audioEnabled === false}
+          mutedIds={state.mutedIds || []}
           preview={
             (state.phase === PHASES.LANDING || state.phase === PHASES.LOCKED) && !showLiveKit
               ? { watch: Boolean(local?.watcher) }
@@ -383,7 +384,7 @@ export function Room({ meetingId }) {
         </FocusStage>
 
         <div className="meet-room__hud" onClick={(e) => e.stopPropagation()}>
-          <StageClock state={state} now={now} />
+          <StageClock state={state} now={clock} />
 
           <NotificationStack
             items={state.notifications}
@@ -406,16 +407,10 @@ export function Room({ meetingId }) {
               <h2>{meeting.name}</h2>
               <p>
                 {state.phase === PHASES.LANDING
-                  ? demo
-                    ? "Landing (demo: 8s) — hang until lock"
-                    : "Landing — 10 minutes. Everyone must be present. Not part of the hour."
-                  : "Meeting locked. Click Start presentations when ready."}
+                  ? "Landing — 10 minutes. Members lock when it ends. Watchers can still join."
+                  : "Members are locked for the vote. Others may watch, not present."}
               </p>
-              <p className="meet-note">
-                {state.participants.filter((p) => p.ready && !p.watcher).length}/
-                {state.participants.filter((p) => !p.watcher).length} present ·{" "}
-                {FORMAT_META[state.format]?.label}
-              </p>
+              <p className="meet-note">{FORMAT_META[state.format]?.label}</p>
               <div className="meet-actions">
                 {state.phase === PHASES.LANDING && (
                   <button
@@ -435,7 +430,7 @@ export function Room({ meetingId }) {
                   onClick={() =>
                     dispatch({ type: "START_PRESENTATIONS", now: Date.now() })
                   }
-                  disabled={state.phase === PHASES.LANDING && !demo}
+                  disabled={(state.phase === PHASES.LANDING && !demo) || state.paused}
                 >
                   Start presentations
                 </button>
@@ -457,6 +452,7 @@ export function Room({ meetingId }) {
                       type: "RESEED",
                       participants: makeManyForBreakout(localName),
                       format: meeting?.format || "election",
+                      procedure: meeting?.procedure,
                       now: Date.now(),
                     })
                     dispatch({
@@ -479,7 +475,11 @@ export function Room({ meetingId }) {
                 {state.breakouts?.length} groups · group {state.activeGroupIndex + 1} (
                 {groupIds.length})
               </p>
-              <p className="meet-note">⅔ consensus · 60 min session (landing excluded)</p>
+              <p className="meet-note">
+                {state.timing?.timed
+                  ? `${state.timing.presentationsMs / 60000} min presentations · ${state.timing.consensusMs / 60000} min consensus`
+                  : "Open procedure · no end time"}
+              </p>
               <button
                 type="button"
                 className="tetra-btn"
@@ -492,7 +492,7 @@ export function Room({ meetingId }) {
             </div>
           )}
 
-          {showPresentations && <TransitionClock endsAt={state.transitionEndsAt} now={now} />}
+          {showPresentations && <TransitionClock endsAt={state.transitionEndsAt} now={clock} />}
 
           {showDiscernment && (
             <ConsensusVote
@@ -503,6 +503,8 @@ export function Room({ meetingId }) {
               positions={state.positions}
               phase={state.phase === PHASES.VERIFY ? "verify" : "vote"}
               ranked={Boolean(FORMAT_META[state.format]?.rankedConsensus)}
+              candidateIds={eligibleCandidateIds(state, groupIds)}
+              maxChoices={advanceCount(state, eligibleCandidateIds(state, groupIds).length)}
               onCast={(ranking) => {
                 dispatch({ type: "CAST_VOTE", participantId: local?.id, ranking })
                 if (FORMAT_META[state.format]?.rankedConsensus) return
@@ -554,6 +556,96 @@ export function Room({ meetingId }) {
                   Stay in group
                 </button>
               </div>
+            </div>
+          )}
+
+          {state.phase === PHASES.WAITING_BREAK && (
+            <div className="meet-results meet-overlay" style={{ bottom: "auto", top: "28%" }}>
+              <h2>Consensus reached</h2>
+              {(state.positions || []).map((p) => (
+                <div key={p.place} className="meet-results__place">
+                  <span className="meet-results__trophy">#{p.place}</span>
+                  {byName(state, p.participantId)}
+                </div>
+              ))}
+              <p className="meet-note">
+                Break starts after every breakout room has reached consensus.
+              </p>
+              <div className="meet-actions">
+                <button
+                  type="button"
+                  className="tetra-btn"
+                  aria-pressed={state.waitingLocation === "main"}
+                  onClick={() => dispatch({ type: "WAIT_IN_MAIN" })}
+                >
+                  Return to main
+                </button>
+                <button
+                  type="button"
+                  className="tetra-btn"
+                  aria-pressed={state.waitingLocation === "breakout"}
+                  onClick={() => dispatch({ type: "WAIT_IN_GROUP" })}
+                >
+                  Stay in group
+                </button>
+                {demo && (
+                  <button
+                    type="button"
+                    className="tetra-btn"
+                    onClick={() =>
+                      dispatch({ type: "MARK_ALL_GROUPS_COMPLETE", now: Date.now() })
+                    }
+                  >
+                    Demo: all groups complete
+                  </button>
+                )}
+              </div>
+            </div>
+          )}
+
+          {state.phase === PHASES.BREAK && (
+            <div className="meet-overlay meet-landing">
+              <h2>Break time</h2>
+              <p>Everyone is back in the main room. Talk, reset, and refill.</p>
+              {demo && (
+                <button
+                  type="button"
+                  className="tetra-btn"
+                  onClick={() => dispatch({ type: "START_SHARING", now: Date.now() })}
+                >
+                  Demo: start sharing
+                </button>
+              )}
+            </div>
+          )}
+
+          {state.phase === PHASES.SHARING && (
+            <div className="meet-overlay meet-landing">
+              <h2>Sharing &amp; wrap up</h2>
+              <p>
+                {state.timing?.sharingMs
+                  ? `${state.timing.sharingMs / 60000} minutes together in the main room.`
+                  : "Together in the main room."}
+              </p>
+              {demo && (
+                <button
+                  type="button"
+                  className="tetra-btn"
+                  onClick={() => dispatch({ type: "END_SHARING", now: Date.now() })}
+                >
+                  Demo: finish sharing
+                </button>
+              )}
+            </div>
+          )}
+
+          {state.phase === PHASES.ENDED && (
+            <div className="meet-overlay meet-landing">
+              <h2>Meeting complete</h2>
+              <p>The timed procedure is over. The room remains open.</p>
+              <button type="button" className="tetra-btn" onClick={leave}>
+                Leave meeting
+              </button>
             </div>
           )}
 
@@ -623,8 +715,12 @@ export function Room({ meetingId }) {
               speakerId={state.speakerId}
               localId={local?.id}
               localStream={localStream}
+              muted={look.audioEnabled === false}
+              mutedIds={state.mutedIds || []}
+              loud={loud}
               speakerStartedAt={state.speakerStartedAt}
-              now={now}
+              speakEndsAt={state.speakEndsAt}
+              now={clock}
               onClaimActive={(id) => {
                 dispatch({ type: "CLAIM_ACTIVE", participantId: id, now: Date.now() })
                 dispatch({
@@ -675,10 +771,26 @@ export function Room({ meetingId }) {
             <button
               type="button"
               className="meet-icon-btn"
-              aria-label={look.audioEnabled === false ? "Unmute" : "Mute"}
+              aria-label={
+                look.audioEnabled === false || (state.paused && (state.mutedIds || []).includes(local?.id))
+                  ? "Unmute"
+                  : "Mute"
+              }
               aria-pressed={look.audioEnabled === false}
-              title={look.audioEnabled === false ? "Unmute" : "Mute"}
-              onClick={() => onLook({ ...look, audioEnabled: look.audioEnabled === false })}
+              title={
+                look.audioEnabled === false || (state.paused && (state.mutedIds || []).includes(local?.id))
+                  ? "Unmute"
+                  : "Mute"
+              }
+              onClick={() => {
+                const held = !!(local && (state.mutedIds || []).includes(local.id))
+                if (state.paused && held) {
+                  dispatch({ type: "SET_MUTED", participantId: local.id, muted: false })
+                  if (look.audioEnabled === false) onLook({ ...look, audioEnabled: true })
+                  return
+                }
+                onLook({ ...look, audioEnabled: look.audioEnabled === false })
+              }}
             >
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path
@@ -687,7 +799,8 @@ export function Room({ meetingId }) {
                   stroke="currentColor"
                   strokeWidth="1.6"
                 />
-                {look.audioEnabled === false && (
+                {(look.audioEnabled === false ||
+                  (state.paused && (state.mutedIds || []).includes(local?.id))) && (
                   <path d="M5 5l14 14" fill="none" stroke="currentColor" strokeWidth="1.6" />
                 )}
               </svg>
@@ -727,6 +840,91 @@ export function Room({ meetingId }) {
               )}
             </button>
           </div>
+          {local?.host && (
+            <button
+              type="button"
+              className="tetra-btn meet-btn"
+              aria-pressed={!!state.paused}
+              onClick={() => dispatch({ type: "TOGGLE_PAUSE", now: Date.now() })}
+            >
+              Pause for Discussion
+            </button>
+          )}
+          {local?.host && (state.phase === PHASES.PRESENTATIONS || state.phase === PHASES.TRANSITION) && (
+            <>
+              <button
+                type="button"
+                className="tetra-btn meet-btn"
+                disabled={
+                  state.paused ||
+                  (state.phase === PHASES.PRESENTATIONS && (state.timeCuts?.[state.speakerId] || 0) >= 2)
+                }
+                onClick={() => dispatch({ type: "ADJUST_TIME", delta: -15000, now: Date.now() })}
+              >
+                −15s
+              </button>
+              <button
+                type="button"
+                className="tetra-btn meet-btn"
+                disabled={
+                  state.paused ||
+                  (state.phase === PHASES.PRESENTATIONS && (state.timeAdds?.[state.speakerId] || 0) >= 4)
+                }
+                onClick={() => dispatch({ type: "ADJUST_TIME", delta: 15000, now: Date.now() })}
+              >
+                +15s
+              </button>
+              {state.phase === PHASES.PRESENTATIONS && (
+                <button
+                  type="button"
+                  className="tetra-btn meet-btn"
+                  disabled={state.paused}
+                  onClick={() => dispatch({ type: "END_TURN", now: Date.now() })}
+                >
+                  End turn
+                </button>
+              )}
+            </>
+          )}
+          {local?.host && state.phase !== PHASES.LANDING && state.phase !== PHASES.LOCKED &&
+            groupParticipants
+              .filter((p) => p.id !== local.id)
+              .map((p) => (
+                <button
+                  key={p.id}
+                  type="button"
+                  className="meet-icon-btn"
+                  aria-label={
+                    (state.mutedIds || []).includes(p.id)
+                      ? state.paused
+                        ? `${p.name} muted`
+                        : `Unmute ${p.name}`
+                      : `Mute ${p.name}`
+                  }
+                  aria-pressed={(state.mutedIds || []).includes(p.id)}
+                  title={p.name}
+                  onClick={() =>
+                    dispatch({
+                      type: "SET_MUTED",
+                      participantId: p.id,
+                      muted: state.paused ? true : !(state.mutedIds || []).includes(p.id),
+                    })
+                  }
+                >
+                  {(state.mutedIds || []).includes(p.id) ? (
+                    <svg viewBox="0 0 24 24" aria-hidden="true">
+                      <path
+                        d="M12 14a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v5a3 3 0 0 0 3 3zM6 11a6 6 0 0 0 12 0M12 17v3M5 5l14 14"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="1.6"
+                      />
+                    </svg>
+                  ) : (
+                    <span>{p.letter}</span>
+                  )}
+                </button>
+              ))}
           {showPresentations && (
             <>
               <DoneButton

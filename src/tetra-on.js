@@ -246,7 +246,7 @@ function screenPain(id) {
   return `<section class="on-screen">
     ${chrome(p.kicker)}
     <div class="on-solid">${solidMarkup(p.solid)}</div>
-    <p class="on-body">${esc(p.scenario)}</p>
+    ${p.scenario ? `<p class="on-body">${esc(p.scenario)}</p>` : ""}
     <h1>${esc(p.question)}</h1>
     ${choices(p.choices, selected)}
   </section>`

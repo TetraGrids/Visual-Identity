@@ -1,3 +1,11 @@
+import {
+  PROCEDURES,
+  VOTING_FORMATS,
+  VOTING_FORMAT_META,
+  procedureFor,
+  hasCompleteProofs,
+} from "./procedures.js"
+
 /**
  * Meeting state machine
  *
@@ -5,9 +13,8 @@
  * - Registration: opens 24h before start
  * - Room open: 15 min before start
  * - Landing: 10 min from start (NOT part of the hour) — all must be present, then locked
- * - Presentations + Discernment: 60 min session hour (landing excluded)
- * - Presentations may end early → discernment gets the remainder
- * - After votes: return to main group, or stay in breakout and leave individually
+ * - Procedure controls presentation, consensus, break, sharing, and round timing.
+ * - Classic Club: 45 presentations → 15 consensus → gated 5 break → 10 sharing.
  */
 
 export const PHASES = {
@@ -21,6 +28,10 @@ export const PHASES = {
   RESULTS: "results",
   STAY: "stay",
   MAIN: "main",
+  WAITING_BREAK: "waiting_break",
+  BREAK: "break",
+  SHARING: "sharing",
+  ENDED: "ended",
   FAIL: "fail",
 }
 
@@ -36,51 +47,25 @@ export const STAGE_LABEL = {
   [PHASES.RESULTS]: "Results",
   [PHASES.STAY]: "Stay",
   [PHASES.MAIN]: "Main",
+  [PHASES.WAITING_BREAK]: "Consensus complete",
+  [PHASES.BREAK]: "Break time",
+  [PHASES.SHARING]: "Sharing & wrap up",
+  [PHASES.ENDED]: "Complete",
   [PHASES.FAIL]: "Failed",
 }
 
-export const FORMATS = {
-  ELECTION: "election",
-  TOP3: "top3",
-  ROUNDTABLE: "roundtable",
-  ROUNDTABLE_PAID: "roundtable_paid",
-}
-
-export const FORMAT_META = {
-  [FORMATS.ELECTION]: {
-    label: "Election",
-    blurb: "One winner of the final. Candidates advance per group Top 3.",
-    advancesPerGroup: 3,
-    money: true,
-    awardPerLevel: false,
-    rankedConsensus: true,
-  },
-  [FORMATS.TOP3]: {
-    label: "Top 3",
-    blurb: "Top three advance per group. Contributors Club share model.",
-    advancesPerGroup: 3,
-    money: true,
-    awardPerLevel: false,
-    shareModel: "contributors_club",
-    rankedConsensus: true,
-  },
-  [FORMATS.ROUNDTABLE]: {
-    label: "Roundtable",
-    blurb: "No money. Anyone can open one.",
-    advancesPerGroup: 0,
-    money: false,
-    awardPerLevel: false,
-    rankedConsensus: false,
-  },
-  [FORMATS.ROUNDTABLE_PAID]: {
-    label: "Roundtable + Awards",
-    blurb: "Award per level won (as many levels as winners ≥ 2).",
-    advancesPerGroup: 0,
-    money: true,
-    awardPerLevel: true,
-    rankedConsensus: true,
-  },
-}
+/** Backward-compatible names while storage migrates from "format" to "votingFormat". */
+export const FORMATS = VOTING_FORMATS
+export const FORMAT_META = Object.fromEntries(
+  Object.entries(VOTING_FORMAT_META).map(([id, meta]) => [
+    id,
+    {
+      ...meta,
+      money: id !== VOTING_FORMATS.ROUNDTABLE,
+      awardPerLevel: id === VOTING_FORMATS.ROUNDTABLE_PAID,
+    },
+  ]),
+)
 
 export const SLOT_COUNT = 8
 
@@ -88,10 +73,12 @@ export const SPEAK_MS = 3.5 * 60 * 1000
 export const WARN_MS = 4 * 60 * 1000
 export const CUTOFF_MS = 5 * 60 * 1000
 export const TRANSITION_MS = 15 * 1000
-export const LANDING_MS = 10 * 60 * 1000
-export const SESSION_MS = 60 * 60 * 1000 // presentations + discernment (landing excluded)
-export const REGISTRATION_OPEN_MS = 24 * 60 * 60 * 1000
-export const EARLY_ENTER_MS = 15 * 60 * 1000
+export const LANDING_MS = procedureFor(PROCEDURES.CLASSIC_CLUB).landingMs
+export const SESSION_MS =
+  procedureFor(PROCEDURES.CLASSIC_CLUB).presentationsMs +
+  procedureFor(PROCEDURES.CLASSIC_CLUB).consensusMs
+export const REGISTRATION_OPEN_MS = procedureFor(PROCEDURES.CLASSIC_CLUB).registrationMs
+export const EARLY_ENTER_MS = procedureFor(PROCEDURES.CLASSIC_CLUB).earlyEntryMs
 export const CHAT_NOTIFY_MS = 5 * 1000
 
 /** Fixed ring angles: slot 0 = top center, then clockwise */
@@ -211,13 +198,28 @@ export function splitBreakouts(participantIds) {
   return groups
 }
 
-export function createInitialMeetingState({ format = FORMATS.ELECTION, participants = [], now = Date.now() } = {}) {
+export function createInitialMeetingState({
+  format = FORMATS.ELECTION,
+  procedure = PROCEDURES.CLASSIC_CLUB,
+  participants = [],
+  now = Date.now(),
+  advanceConfig = null,
+  roles = [],
+} = {}) {
+  const timing = procedureFor(procedure)
   return {
     phase: PHASES.LANDING,
     format,
+    votingFormat: format,
+    procedure,
+    timing,
+    advanceConfig,
+    roles,
+    round: 1,
     startedAt: now,
-    landingEndsAt: now + LANDING_MS,
-    sessionEndsAt: null, // set when presentations start (= now + SESSION_MS)
+    landingEndsAt: timing.landingMs != null ? now + timing.landingMs : null,
+    sessionEndsAt: null,
+    phaseEndsAt: null,
     presentationsStartedAt: null,
     discernmentStartedAt: null,
     participants,
@@ -225,9 +227,14 @@ export function createInitialMeetingState({ format = FORMATS.ELECTION, participa
     activeGroupIndex: 0,
     speakerId: null,
     speakerStartedAt: null,
+    speakEndsAt: null,
+    timeCuts: {},
+    timeAdds: {},
+    mutedIds: [],
     screenShareId: null, // participant id sharing screen (demo toggle)
     /** Speak order mapped onto fixed 8 slots; index 0 = active/top */
     slots: assignSlots(participants.filter((p) => !p.watcher).map((p) => p.id)),
+    spokenIds: [],
     doneArmed: false,
     transitionEndsAt: null,
     votes: {},
@@ -236,6 +243,11 @@ export function createInitialMeetingState({ format = FORMATS.ELECTION, participa
     failReason: null,
     notifications: [],
     locked: false,
+    paused: false,
+    pausedAt: null,
+    completedGroupIds: [],
+    returnedToMainIds: [],
+    waitingLocation: "breakout",
   }
 }
 
@@ -251,13 +263,14 @@ export function assignSlots(ids) {
 export function reduceMeeting(state, action) {
   switch (action.type) {
     case "TICK": {
+      if (state.paused) return state
       const t = action.now
-      if (state.phase === PHASES.LANDING && t >= state.landingEndsAt) {
+      if (state.phase === PHASES.LANDING && state.landingEndsAt && t >= state.landingEndsAt) {
         return { ...state, phase: PHASES.LOCKED, locked: true }
       }
       if (state.phase === PHASES.PRESENTATIONS && state.speakerStartedAt != null) {
-        const elapsed = t - state.speakerStartedAt
-        if (elapsed >= CUTOFF_MS) {
+        const end = state.speakEndsAt || state.speakerStartedAt + CUTOFF_MS
+        if (t >= end) {
           return passToNext({ ...state, doneArmed: false }, t)
         }
       }
@@ -266,18 +279,24 @@ export function reduceMeeting(state, action) {
         return startSpeaker(state, nextId, t)
       }
       if (
-        (state.phase === PHASES.PRESENTATIONS ||
-          state.phase === PHASES.DISCERNMENT ||
-          state.phase === PHASES.TRANSITION ||
-          state.phase === PHASES.VERIFY) &&
-        state.sessionEndsAt &&
-        t >= state.sessionEndsAt
+        state.phase === PHASES.PRESENTATIONS &&
+        state.phaseEndsAt &&
+        t >= state.phaseEndsAt
       ) {
-        if (state.phase === PHASES.DISCERNMENT || state.phase === PHASES.VERIFY) {
-          return failMeeting(state, "Session hour ended without verified consensus")
-        }
-        // presentations ran to the clock — force discernment with whatever time left (0)
         return beginDiscernment(state, t)
+      }
+      if (
+        (state.phase === PHASES.DISCERNMENT || state.phase === PHASES.VERIFY) &&
+        state.phaseEndsAt &&
+        t >= state.phaseEndsAt
+      ) {
+        return failMeeting(state, "Consensus time ended without verified consensus")
+      }
+      if (state.phase === PHASES.BREAK && state.phaseEndsAt && t >= state.phaseEndsAt) {
+        return beginSharing(state, t)
+      }
+      if (state.phase === PHASES.SHARING && state.phaseEndsAt && t >= state.phaseEndsAt) {
+        return finishRound(state, t)
       }
       return state
     }
@@ -290,6 +309,7 @@ export function reduceMeeting(state, action) {
     }
     case "START_PRESENTATIONS":
     case "START_ALL_DEMO":
+      if (state.paused) return state
       return beginSession(
         {
           ...state,
@@ -355,6 +375,65 @@ export function reduceMeeting(state, action) {
     }
     case "SET_SCREEN_SHARE":
       return { ...state, screenShareId: action.participantId || null }
+    case "ADJUST_TIME": {
+      if (state.paused) return state
+      const t = action.now || Date.now()
+      if (state.phase === PHASES.PRESENTATIONS && state.speakerId && state.speakerStartedAt != null) {
+        const cuts = state.timeCuts || {}
+        const adds = state.timeAdds || {}
+        const end = state.speakEndsAt || state.speakerStartedAt + CUTOFF_MS
+        if (action.delta < 0) {
+          if ((cuts[state.speakerId] || 0) >= 2) return state
+          return {
+            ...state,
+            speakEndsAt: Math.max(t + 1000, end + action.delta),
+            timeCuts: { ...cuts, [state.speakerId]: (cuts[state.speakerId] || 0) + 1 },
+          }
+        }
+        if ((adds[state.speakerId] || 0) >= 4) return state
+        return {
+          ...state,
+          speakEndsAt: Math.max(t + 1000, end + action.delta),
+          timeAdds: { ...adds, [state.speakerId]: (adds[state.speakerId] || 0) + 1 },
+        }
+      }
+      if (state.phase === PHASES.TRANSITION && state.transitionEndsAt) {
+        return { ...state, transitionEndsAt: Math.max(t + 1000, state.transitionEndsAt + action.delta) }
+      }
+      return state
+    }
+    case "END_TURN":
+      if (state.paused || state.phase !== PHASES.PRESENTATIONS) return state
+      return passToNext(state, action.now || Date.now())
+    case "TOGGLE_PAUSE": {
+      const t = action.now || Date.now()
+      if (!state.paused) return { ...state, paused: true, pausedAt: t }
+      const shift = (n) => (typeof n === "number" ? n + (t - state.pausedAt) : n)
+      return {
+        ...state,
+        paused: false,
+        pausedAt: null,
+        landingEndsAt: shift(state.landingEndsAt),
+        speakEndsAt: shift(state.speakEndsAt),
+        speakerStartedAt: shift(state.speakerStartedAt),
+        transitionEndsAt: shift(state.transitionEndsAt),
+        sessionEndsAt: shift(state.sessionEndsAt),
+        phaseEndsAt: shift(state.phaseEndsAt),
+        presentationsStartedAt: shift(state.presentationsStartedAt),
+        discernmentStartedAt: shift(state.discernmentStartedAt),
+      }
+    }
+    case "SET_MUTED": {
+      const ids = state.mutedIds || []
+      const has = ids.includes(action.participantId)
+      if (!action.muted && state.paused) {
+        const who = state.participants.find((p) => p.id === action.participantId)
+        if (!who?.isLocal) return state
+      }
+      if (action.muted && !has) return { ...state, mutedIds: [...ids, action.participantId] }
+      if (!action.muted && has) return { ...state, mutedIds: ids.filter((id) => id !== action.participantId) }
+      return state
+    }
     case "NOTIFY":
       return {
         ...state,
@@ -388,19 +467,43 @@ export function reduceMeeting(state, action) {
       return { ...state, phase: PHASES.STAY }
     case "RETURN_TO_MAIN":
       return { ...state, phase: PHASES.MAIN, speakerId: null, speakerStartedAt: null }
+    case "WAIT_IN_GROUP":
+      return { ...state, waitingLocation: "breakout" }
+    case "WAIT_IN_MAIN":
+      return { ...state, waitingLocation: "main", speakerId: null, speakerStartedAt: null }
     case "FAIL":
       return failMeeting(state, action.reason || "Consensus not reached")
     case "VERIFY_OK":
-      return {
-        ...state,
-        phase: PHASES.RESULTS,
-        positions: action.positions || state.positions,
-      }
+      return completeCurrentGroup(
+        {
+          ...state,
+          positions: action.positions || state.positions,
+        },
+        action.now || Date.now(),
+      )
+    case "MARK_GROUP_COMPLETE":
+      return completeGroup(state, action.groupIndex ?? state.activeGroupIndex, action.now || Date.now())
+    case "MARK_ALL_GROUPS_COMPLETE": {
+      const count = Math.max(1, state.breakouts?.length || 1)
+      const completedGroupIds = Array.from({ length: count }, (_, i) => i)
+      return beginBreak({ ...state, completedGroupIds }, action.now || Date.now())
+    }
+    case "START_BREAK":
+      return allGroupsComplete(state)
+        ? beginBreak(state, action.now || Date.now())
+        : { ...state, phase: PHASES.WAITING_BREAK }
+    case "START_SHARING":
+      return beginSharing(state, action.now || Date.now())
+    case "END_SHARING":
+      return finishRound(state, action.now || Date.now())
     case "RESEED":
       return createInitialMeetingState({
         format: action.format || state.format,
+        procedure: action.procedure || state.procedure,
         participants: action.participants || state.participants,
         now: action.now || Date.now(),
+        advanceConfig: state.advanceConfig,
+        roles: state.roles,
       })
     default:
       return state
@@ -442,13 +545,19 @@ function beginPresentations(state, now) {
   const group = state.breakouts?.[state.activeGroupIndex] || state.slots.filter(Boolean)
   const slots = state.slots?.some(Boolean) ? state.slots.slice() : assignSlots(group)
   const speakerId = slots[0] || group[0] || null
+  const timing = state.timing || procedureFor(state.procedure)
   return {
     ...state,
     phase: PHASES.PRESENTATIONS,
     presentationsStartedAt: now,
-    sessionEndsAt: state.sessionEndsAt || now + SESSION_MS,
+    sessionEndsAt:
+      timing.timed && timing.presentationsMs != null && timing.consensusMs != null
+        ? now + timing.presentationsMs + timing.consensusMs
+        : null,
+    phaseEndsAt: timing.timed && timing.presentationsMs != null ? now + timing.presentationsMs : null,
     speakerId,
     speakerStartedAt: now,
+    speakEndsAt: now + CUTOFF_MS,
     slots,
     doneArmed: false,
     transitionEndsAt: null,
@@ -456,14 +565,17 @@ function beginPresentations(state, now) {
 }
 
 function beginDiscernment(state, now) {
+  const timing = state.timing || procedureFor(state.procedure)
   return {
     ...state,
     phase: PHASES.DISCERNMENT,
     discernmentStartedAt: now,
+    phaseEndsAt: timing.timed && timing.consensusMs != null ? now + timing.consensusMs : null,
     speakerId: null,
     speakerStartedAt: null,
+    speakEndsAt: null,
     doneArmed: false,
-    // sessionEndsAt already set — remainder of the hour
+    transitionEndsAt: null,
   }
 }
 
@@ -475,6 +587,7 @@ function startSpeaker(state, speakerId, now) {
     phase: PHASES.PRESENTATIONS,
     speakerId,
     speakerStartedAt: now,
+    speakEndsAt: now + CUTOFF_MS,
     slots,
     doneArmed: false,
     transitionEndsAt: null,
@@ -507,38 +620,48 @@ function nextFromSlots(state) {
   return null
 }
 
-function passToNext(state, now) {
-  const nextId = nextFromSlots(state)
-  if (!nextId) {
-    return beginDiscernment(state, now)
-  }
-  // clear current from slot 0 into end, promote next
-  const slots = state.slots.slice()
-  const finished = slots[0]
-  const nextIdx = slots.indexOf(nextId)
-  slots[0] = nextId
-  slots[nextIdx] = null
-  // pack finished to first empty after 0 or drop (already spoke)
-  // keep finished visible in ring at first empty
-  const empty = slots.findIndex((s, i) => i > 0 && s == null)
-  if (empty >= 0 && finished) slots[empty] = finished
+function turnSlots(slots) {
+  const prev = slots
+  return prev.map((_, i) => prev[(i + 1) % prev.length])
+}
 
+function passToNext(state, now) {
+  const spoken = new Set(state.spokenIds || [])
+  if (state.speakerId) spoken.add(state.speakerId)
+  const waiting = (state.slots || []).some((id) => id && !spoken.has(id))
+  let slots = turnSlots(state.slots)
+  if (!waiting) {
+    return beginDiscernment({ ...state, slots, spokenIds: [...spoken] }, now)
+  }
+  let guard = 0
+  while (!slots[0] && guard < SLOT_COUNT) {
+    slots = turnSlots(slots)
+    guard++
+  }
+  const nextId = slots[0]
+  if (!nextId || spoken.has(nextId)) {
+    return beginDiscernment({ ...state, slots, spokenIds: [...spoken] }, now)
+  }
   return {
     ...state,
-    phase: PHASES.TRANSITION,
-    transitionEndsAt: now + TRANSITION_MS,
-    speakerId: null,
-    speakerStartedAt: null,
+    phase: PHASES.PRESENTATIONS,
+    speakerId: nextId,
+    speakerStartedAt: now,
+    speakEndsAt: now + CUTOFF_MS,
     slots,
+    spokenIds: [...spoken],
+    doneArmed: false,
+    transitionEndsAt: null,
   }
 }
 
 function tryResolveVotes(state) {
   const group = (state.breakouts?.[state.activeGroupIndex] || state.slots.filter(Boolean)).filter(Boolean)
-  if (!FORMAT_META[state.format]?.rankedConsensus) return resolveHeadcount(state, group)
-  if (!group.length) return state
+  const candidates = eligibleCandidateIds(state, group)
+  if (!FORMAT_META[state.format]?.rankedConsensus) return resolveHeadcount(state, group, candidates)
+  if (!candidates.length) return state
   const ballots = group.map((id) => state.votes[id]).filter((ranking) => ranking?.length)
-  const snap = rankSnapshot(group, ballots)
+  const snap = rankSnapshot(candidates, ballots)
   if (snap.impossible) {
     return failMeeting({ ...state, votes: {} }, "Locked ballots cannot reach consensus")
   }
@@ -550,7 +673,7 @@ function tryResolveVotes(state) {
     const ids = held.map((r) => r.id)
     const rest = snap.rows.filter((r) => !ids.includes(r.id)).sort((a, b) => b.points - a.points)
     for (const r of rest) {
-      if (ids.length >= Math.min(3, group.length)) break
+      if (ids.length >= Math.min(advanceCount(state, candidates.length), candidates.length)) break
       ids.push(r.id)
     }
     return {
@@ -559,7 +682,7 @@ function tryResolveVotes(state) {
       positions: ids.map((id, i) => ({ place: i + 1, participantId: id })),
     }
   }
-  if (held.length >= Math.min(3, group.length)) {
+  if (held.length >= Math.min(advanceCount(state, candidates.length), candidates.length)) {
     return {
       ...state,
       phase: PHASES.VERIFY,
@@ -569,7 +692,7 @@ function tryResolveVotes(state) {
   return state
 }
 
-function resolveHeadcount(state, group) {
+function resolveHeadcount(state, group, candidates = group) {
   const need = consensusThreshold(group.length)
   const ballots = Object.entries(state.votes).filter(([id]) => group.includes(id))
   if (ballots.length < need) return state
@@ -577,7 +700,7 @@ function resolveHeadcount(state, group) {
   const first = {}
   for (const [, ranking] of ballots) {
     const top = ranking?.[0]
-    if (top) first[top] = (first[top] || 0) + 1
+    if (top && candidates.includes(top)) first[top] = (first[top] || 0) + 1
   }
   const sorted = Object.entries(first).sort((a, b) => b[1] - a[1])
   if (!sorted.length || sorted[0][1] < need) return state
@@ -600,9 +723,142 @@ function resolveHeadcount(state, group) {
     { place: 1, participantId: pos1 },
     pos2 && { place: 2, participantId: pos2 },
     pos3 && { place: 3, participantId: pos3 },
-  ].filter(Boolean)
+  ].filter(Boolean).slice(0, advanceCount(state, candidates.length))
 
   return { ...state, phase: PHASES.VERIFY, positions }
+}
+
+export function eligibleCandidateIds(state, groupIds) {
+  if (state.format !== VOTING_FORMATS.ROLE_ELECTION) return groupIds
+  return groupIds.filter((id) => {
+    const participant = state.participants.find((p) => p.id === id)
+    return hasCompleteProofs(participant?.proofs)
+  })
+}
+
+export function advanceCount(state, groupSize) {
+  switch (state.format) {
+    case VOTING_FORMATS.TOP3:
+      return Math.min(3, groupSize)
+    case VOTING_FORMATS.MULTI_ROLE:
+      return Math.min(Math.max(1, state.roles?.length || 1), groupSize)
+    case VOTING_FORMATS.CREAM_OF_CROP: {
+      const config = state.advanceConfig || {}
+      if (config.mode === "ratio") {
+        return Math.max(1, Math.min(groupSize, Math.ceil(groupSize * Number(config.value || 0.5))))
+      }
+      return Math.max(1, Math.min(groupSize, Number(config.value || 2)))
+    }
+    case VOTING_FORMATS.ELECTION:
+    case VOTING_FORMATS.ROLE_ELECTION:
+      return 1
+    default:
+      return Math.min(3, groupSize)
+  }
+}
+
+export function allGroupsComplete(state) {
+  const count = Math.max(1, state.breakouts?.length || 1)
+  return (state.completedGroupIds || []).length >= count
+}
+
+function completeCurrentGroup(state, now) {
+  return completeGroup(state, state.activeGroupIndex || 0, now)
+}
+
+function completeGroup(state, groupIndex, now) {
+  const completedGroupIds = Array.from(
+    new Set([...(state.completedGroupIds || []), groupIndex]),
+  )
+  const next = {
+    ...state,
+    completedGroupIds,
+    phase: PHASES.WAITING_BREAK,
+    phaseEndsAt: null,
+    speakerId: null,
+    speakerStartedAt: null,
+  }
+  return allGroupsComplete(next) ? beginBreak(next, now) : next
+}
+
+function beginBreak(state, now) {
+  const timing = state.timing || procedureFor(state.procedure)
+  if (!allGroupsComplete(state)) {
+    return { ...state, phase: PHASES.WAITING_BREAK, phaseEndsAt: null }
+  }
+  if (!timing.timed || timing.breakMs == null) {
+    return { ...state, phase: PHASES.MAIN, phaseEndsAt: null }
+  }
+  return {
+    ...state,
+    phase: PHASES.BREAK,
+    phaseEndsAt: now + timing.breakMs,
+    returnedToMainIds: state.participants.filter((p) => !p.watcher).map((p) => p.id),
+    waitingLocation: "main",
+    activeGroupIndex: 0,
+    speakerId: null,
+    speakerStartedAt: null,
+    mutedIds: [],
+  }
+}
+
+function beginSharing(state, now) {
+  const timing = state.timing || procedureFor(state.procedure)
+  if (!timing.timed || timing.sharingMs == null) {
+    return { ...state, phase: PHASES.MAIN, phaseEndsAt: null }
+  }
+  return {
+    ...state,
+    phase: PHASES.SHARING,
+    phaseEndsAt: now + timing.sharingMs,
+    speakerId: null,
+    speakerStartedAt: null,
+    mutedIds: [],
+  }
+}
+
+function finishRound(state, now) {
+  const hadMoreThanTwoGroups = (state.breakouts?.length || 1) > 2
+  if (state.round === 1 && hadMoreThanTwoGroups) {
+    const positionIds = (state.positions || []).map((p) => p.participantId)
+    const otherWinners = (state.breakouts || [])
+      .filter((_, i) => i !== state.activeGroupIndex)
+      .map((group) => group[0])
+      .filter(Boolean)
+    const selected = Array.from(new Set([...positionIds, ...otherWinners]))
+    const fallback = state.participants.filter((p) => !p.watcher).map((p) => p.id)
+    const roundIds = selected.length >= 2 ? selected : fallback
+    const breakouts = splitBreakouts(roundIds)
+    const slots = assignSlots(breakouts[0] || roundIds)
+    return beginPresentations(
+      {
+        ...state,
+        round: 2,
+        breakouts,
+        activeGroupIndex: 0,
+        slots,
+        spokenIds: [],
+        votes: {},
+        positions: null,
+        completedGroupIds: [],
+        returnedToMainIds: [],
+        presentationsStartedAt: null,
+        discernmentStartedAt: null,
+        sessionEndsAt: null,
+        notifications: pushNote(state, "Round 2 started", now),
+      },
+      now,
+    )
+  }
+  return {
+    ...state,
+    phase: PHASES.ENDED,
+    phaseEndsAt: null,
+    sessionEndsAt: null,
+    speakerId: null,
+    speakerStartedAt: null,
+    mutedIds: [],
+  }
 }
 
 function failMeeting(state, reason) {
@@ -614,47 +870,94 @@ function failMeeting(state, reason) {
   }
 }
 
+/** User-created or live-demo rooms (not seeded recurring templates). */
+export function isAdHocMeeting(meeting) {
+  return Boolean(meeting && !meeting.recurring)
+}
+
 /** Registration opens 24h before start, until start. */
 export function canRegister(meeting, now = Date.now()) {
   if (!meeting?.startsAt) return true
-  const open = meeting.startsAt - REGISTRATION_OPEN_MS
+  const timing = procedureFor(meeting.procedure)
+  const open = meeting.startsAt - timing.registrationMs
   return now >= open && now < meeting.startsAt
 }
 
 /**
- * Enter room from 15 min before start through end of landing.
- * After landing the meeting is locked (no new entrants).
+ * Participate from 15 min before start through the end of the 10-minute landing.
+ * After that, members are locked. Watchers can still enter.
  */
-export function canJoinMeeting(meeting, now = Date.now()) {
+export function canJoinMeeting(meeting, now = Date.now(), options = {}) {
   if (!meeting?.startsAt) return true
+  if (
+    options.relaxTiming &&
+    isAdHocMeeting(meeting) &&
+    (meeting.status === "active" || meeting.id === "demo-now")
+  ) {
+    return true
+  }
   if (meeting.status === "active" && meeting.id === "demo-now") return true
-  const open = meeting.startsAt - EARLY_ENTER_MS
-  const lockAt = meeting.startsAt + LANDING_MS
+  const timing = procedureFor(meeting.procedure)
+  const open = meeting.startsAt - timing.earlyEntryMs
+  const lockAt = meeting.startsAt + timing.landingMs
   return now >= open && now < lockAt
+}
+
+/** Watchers may enter through the session, including after members lock. */
+export function canWatchMeeting(meeting, now = Date.now(), options = {}) {
+  if (!meeting?.startsAt) return true
+  if (
+    options.relaxTiming &&
+    isAdHocMeeting(meeting) &&
+    (meeting.status === "active" || meeting.id === "demo-now")
+  ) {
+    return true
+  }
+  if (meeting.status === "active" && meeting.id === "demo-now") return true
+  const timing = procedureFor(meeting.procedure)
+  const open = meeting.startsAt - timing.earlyEntryMs
+  if (!timing.timed) return now >= open
+  const end =
+    meeting.startsAt +
+    timing.landingMs +
+    timing.presentationsMs +
+    timing.consensusMs +
+    timing.breakMs +
+    timing.sharingMs
+  return now >= open && now < end
 }
 
 /** Stage progress for top-left clock */
 export function stageProgress(state, now = Date.now()) {
   const label = STAGE_LABEL[state.phase] || state.phase
   if (state.phase === PHASES.LANDING) {
-    const total = LANDING_MS
-    const left = Math.max(0, state.landingEndsAt - now)
-    return { label, left, total, progress: left / total }
-  }
-  if (state.phase === PHASES.LOCKED || state.phase === PHASES.BREAKOUT) {
-    return { label, left: 0, total: 1, progress: 0 }
+    const total = state.timing?.landingMs || LANDING_MS
+    const left = state.landingEndsAt ? Math.max(0, state.landingEndsAt - now) : null
+    return { label, left, total, progress: left == null ? 1 : left / total }
   }
   if (
-    state.phase === PHASES.PRESENTATIONS ||
-    state.phase === PHASES.TRANSITION ||
-    state.phase === PHASES.DISCERNMENT ||
-    state.phase === PHASES.VERIFY
+    state.phase === PHASES.LOCKED ||
+    state.phase === PHASES.BREAKOUT ||
+    state.phase === PHASES.WAITING_BREAK ||
+    state.phase === PHASES.MAIN
   ) {
-    const ends = state.sessionEndsAt || now + SESSION_MS
-    const started = state.presentationsStartedAt || now
-    const total = Math.max(1, ends - started)
-    const left = Math.max(0, ends - now)
+    return { label, left: null, total: null, progress: 0 }
+  }
+  if (state.phase === PHASES.ENDED) {
+    return { label, left: null, total: null, progress: 1, ended: true }
+  }
+  if (state.phaseEndsAt) {
+    const durations = {
+      [PHASES.PRESENTATIONS]: state.timing?.presentationsMs,
+      [PHASES.TRANSITION]: TRANSITION_MS,
+      [PHASES.DISCERNMENT]: state.timing?.consensusMs,
+      [PHASES.VERIFY]: state.timing?.consensusMs,
+      [PHASES.BREAK]: state.timing?.breakMs,
+      [PHASES.SHARING]: state.timing?.sharingMs,
+    }
+    const total = Math.max(1, durations[state.phase] || state.phaseEndsAt - now)
+    const left = Math.max(0, state.phaseEndsAt - now)
     return { label, left, total, progress: left / total }
   }
-  return { label, left: 0, total: 1, progress: 1 }
+  return { label, left: null, total: null, progress: 1 }
 }

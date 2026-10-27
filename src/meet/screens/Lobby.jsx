@@ -1,7 +1,9 @@
 import React from "react"
 import { navigate } from "../router.js"
 import { loadMeetings, formatUtcBadge } from "../state/store.js"
-import { FORMAT_META, canJoinMeeting, canRegister } from "../state/machine.js"
+import { FORMAT_META, canJoinMeeting, canWatchMeeting, canRegister } from "../state/machine.js"
+import { hasTokenServer } from "../lib/token.js"
+import { PROCEDURE_META, PROCEDURES, procedureFor } from "../state/procedures.js"
 
 export function Lobby() {
   const [meetings, setMeetings] = React.useState(() => loadMeetings())
@@ -11,10 +13,11 @@ export function Lobby() {
   }, [])
 
   const now = Date.now()
-  const active = meetings.filter((m) => canJoinMeeting(m, now))
-  const scheduled = meetings
-    .filter((m) => !canJoinMeeting(m, now))
-    .sort((a, b) => a.startsAt - b.startsAt)
+  const timing = !hasTokenServer() ? { relaxTiming: true } : undefined
+  const live = (m) =>
+    canJoinMeeting(m, now, timing) || canWatchMeeting(m, now, timing)
+  const active = meetings.filter(live)
+  const scheduled = meetings.filter((m) => !live(m)).sort((a, b) => a.startsAt - b.startsAt)
 
   return (
     <div className="meet-lobby">
@@ -48,10 +51,13 @@ export function Lobby() {
                 aria-label={`Join live: ${m.name}`}
                 onClick={() => navigate(`/join/${m.id}`)}
               >
-                <div className="meet-active-card__now">Now</div>
+                <div className="meet-active-card__now">
+                  {canJoinMeeting(m, now, timing) ? "Now" : "Watch"}
+                </div>
                 <strong>{m.name}</strong>
                 <span>
                   {FORMAT_META[m.format]?.label || m.format}
+                  {` · ${PROCEDURE_META[m.procedure || PROCEDURES.CLASSIC_CLUB].label}`}
                   {m.participants ? ` · ${m.participants} in` : ""}
                 </span>
               </button>
@@ -68,14 +74,16 @@ export function Lobby() {
           {scheduled.map((m) => {
             const open = canRegister(m, now)
             const early =
-              now >= m.startsAt - 15 * 60 * 1000 && now < m.startsAt
+              now >= m.startsAt - procedureFor(m.procedure).earlyEntryMs && now < m.startsAt
             return (
               <button
                 key={m.id}
                 type="button"
                 className="meet-list__row"
                 onClick={() =>
-                  navigate(early || canJoinMeeting(m, now) ? `/join/${m.id}` : `/register/${m.id}`)
+                  navigate(
+                    early || canJoinMeeting(m, now, timing) ? `/join/${m.id}` : `/register/${m.id}`,
+                  )
                 }
               >
                 <span className="meet-list__when">{formatUtcBadge(m.startsAt)}</span>
@@ -83,6 +91,7 @@ export function Lobby() {
                   <strong>{m.name}</strong>
                   <div className="meet-list__meta">
                     {FORMAT_META[m.format]?.label || m.format}
+                    {` · ${PROCEDURE_META[m.procedure || PROCEDURES.CLASSIC_CLUB].label}`}
                     {m.visibility === "private" ? " · private" : ""}
                     {m.recurring ? " · recurring" : ""}
                     {open ? " · registration open" : ""}
@@ -99,8 +108,8 @@ export function Lobby() {
       </section>
 
       <p className="meet-note">
-        Registration opens 24h before · Room 15 min early · 10 min landing (not in the hour) · then
-        locked. Contributor&apos;s Club Tue 17:00 UTC · Antelope Roundtable Wed 17:00 UTC.
+        Classic Club: register 24h before · room 15 min early · 10 min landing · 45 min
+        presentations · 15 min consensus · 5 min break · 10 min sharing.
       </p>
     </div>
   )

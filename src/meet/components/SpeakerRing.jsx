@@ -2,14 +2,14 @@ import React from "react"
 import { SemicircleTimer, formatMmSs } from "./SemicircleTimer.jsx"
 import { SPEAK_MS, WARN_MS, CUTOFF_MS } from "../state/machine.js"
 
-export function SpeakerRing({ startedAt, now, size = 56 }) {
+export function SpeakerRing({ startedAt, endsAt, now, size = 56 }) {
   if (!startedAt) return null
-  const elapsed = now - startedAt
-  const remaining = Math.max(0, CUTOFF_MS - elapsed)
-  const progress = remaining / CUTOFF_MS
-  const warn = elapsed >= WARN_MS
-  const cut = elapsed >= CUTOFF_MS
-  const softLeft = Math.max(0, SPEAK_MS - elapsed)
+  const end = endsAt || startedAt + CUTOFF_MS
+  const remaining = Math.max(0, end - now)
+  const progress = remaining / Math.max(1, end - startedAt)
+  const warn = remaining <= CUTOFF_MS - WARN_MS && remaining > 0
+  const cut = remaining <= 0
+  const softLeft = Math.max(0, end - (CUTOFF_MS - SPEAK_MS) - now)
 
   return (
     <div

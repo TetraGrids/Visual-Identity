@@ -7,9 +7,6 @@ export function ProofBubbles({ proofs, speakerName }) {
   const [open, setOpen] = React.useState(false)
   const p = normalizeProofs(proofs)
   const bubbles = proofBubbles(p)
-
-  if (!bubbles.length) return null
-
   const mdHtml = React.useMemo(() => {
     try {
       return marked.parse(p.brief || "", { async: false })
@@ -17,6 +14,8 @@ export function ProofBubbles({ proofs, speakerName }) {
       return ""
     }
   }, [p.brief])
+
+  if (!bubbles.length) return null
 
   return (
     <>

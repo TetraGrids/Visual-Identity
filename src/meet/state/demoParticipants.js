@@ -52,6 +52,7 @@ export function makeDemoParticipants(count = 5, localName = "You", localProofs =
       avatarUrl: localProofs?.imageData || "",
       ready: false,
       isLocal: true,
+      host: true,
       canSign: true,
       watcher: false,
       proofs: localProofs || {

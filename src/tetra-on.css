@@ -193,8 +193,8 @@ body.on-body,
   place-items: center;
   padding: 0;
   color: var(--tetra-ink);
-  background: var(--tetra-void-lift);
-  border: 1px solid var(--tetra-glass-border);
+  background: none;
+  border: 0;
   cursor: pointer;
 }
 
@@ -205,15 +205,19 @@ body.on-body,
 }
 
 .on-arrow:hover,
-.on-arrow:focus-visible {
+.on-arrow:focus-visible,
+.on-arrow:active {
   color: var(--tetra-green);
-  border-color: var(--tetra-green);
   outline: none;
+  filter:
+    drop-shadow(0 0 8px rgba(34, 197, 94, 0.85))
+    drop-shadow(0 0 16px rgba(139, 92, 246, 0.45));
 }
 
 .on-arrow:disabled {
   color: var(--tetra-ink-mute);
   opacity: 0.28;
+  filter: none;
   cursor: default;
   pointer-events: none;
 }
@@ -242,7 +246,7 @@ body.on-body,
   margin: 0 0 10px;
   font-size: clamp(28px, 8vw, 40px);
   font-weight: 500;
-  line-height: 0.95;
+  line-height: 1.05;
   letter-spacing: var(--tetra-tracking-display);
   text-transform: uppercase;
 }
@@ -499,10 +503,13 @@ body.on-body,
 
 .on-star {
   flex: 1;
-  height: 52px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  padding: 0;
   color: var(--tetra-ink-mute);
-  background: var(--tetra-void-lift);
-  border: 1px solid var(--tetra-glass-border);
+  background: none;
+  border: 0;
   cursor: pointer;
 }
 
@@ -511,9 +518,14 @@ body.on-body,
   height: 22px;
 }
 
+.on-star:hover,
+.on-star:focus-visible,
 .on-star.is-on {
   color: var(--tetra-green);
-  border-color: var(--tetra-green);
+  outline: none;
+  filter:
+    drop-shadow(0 0 8px rgba(34, 197, 94, 0.85))
+    drop-shadow(0 0 16px rgba(139, 92, 246, 0.45));
 }
 
 .on-timeline {
